@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <title>Yello</title>
+        <link href="botchat.css" rel="stylesheet" />
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+   
+    </head>
+    <body style="background:#fd0 url('http://new.digi.com.my/cs/site_template/digi/images/digi-pattern.png');">
+		<div id="wc-popup-url" class="wc-popup">
+			<div class="wc-popup-window">
+				<div style="padding: 40px;">
+					<h3>You will be redirected away to Digi Website</h3>
+					Do you wish to continue? 
+					<br>
+					<span> 
+						<a id="wc-popup-button-ok" href="http://bot.digi.com.my" target="_blank"><button class="wc-popup-button" onclick="$('#wc-popup-url').fadeOut(200);">Yes</button></a>
+						<button id="wc-popup-button-cancel" class="wc-popup-button" onclick="$('#wc-popup-url').fadeOut(200);" >Cancel</button> 
+					</span>
+				</div>
+			</div>
+		</div>
+
+		<div id="wc-popup-feedback" class="wc-popup">
+			<div class="wc-popup-window">
+				<div class="wc-popup-window-header">We appreciate your feedback</div>
+
+				<div class="wc-popup-window-body">
+					How would you rate our Chat Service? 
+
+					<b><span id="popup-feedback-comment"></span></b>
+					<form id="feedbackForm">
+						<div>
+							<fieldset id="popup-feedback-stars" class="rating">
+								<input type="radio" id="star5" name="rating" value="5" checked="checked" /><label class = "full" for="star5" title="☆☆☆☆☆ - Awesome"></label>
+								<input type="radio" id="star4" name="rating" value="4" /><label class = "full" for="star4" title="☆☆☆☆ - Pretty good"></label>
+								<input type="radio" id="star3" name="rating" value="3" /><label class = "full" for="star3" title="☆☆☆ - OK"></label>
+								<input type="radio" id="star2" name="rating" value="2" /><label class = "full" for="star2" title="☆☆ - Need Improvement"></label>
+								<input type="radio" id="star1" name="rating" value="1" /><label class = "full" for="star1" title="☆ - Not Helpful"></label>
+							</fieldset>
+
+							<textarea rows="3" class="form-control wc-feedback-text" id="popup-feedback-remark"  name="survey-text" placeholder="Enter your feedback here" ></textarea>
+						</div>
+						<br><br><br>
+						<button id="wc-popup-feedback-ok" class="wc-popup-button" type="button" onClick='submitFeedback()'>Submit</button> 
+						<button id="wc-popup-feedback-cancel" class="wc-popup-button" type="button" onClick='$("#wc-popup-feedback").fadeOut(200);'>Cancel</button> 
+					</form>				
+				</div>
+			</div>
+		</div>
+
+		<div id="wc-popup-feedback-thankyou" class="wc-popup">
+			<div class="wc-popup-window">
+				<div class="wc-popup-window-header"></div>
+
+				<div class="wc-popup-window-body">
+					Thank you for your feedback!!
+				</div>
+			</div>
+		</div>
+       
+        <div>
+            <div id="BotChatGoesHere"/>
+            <div style="clear:both;"/>
+
+			<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+			<script src="botchat.min.js"> </script>
+			<script src="digihelper.js"> </script>
+
+			<script>
+				var now = new Date();
+
+				// display offline page, if requested to
+				<%if (process.env.OFFLINE == '1') { %>
+					window.location.replace("http://bot.digi.com.my/offline.html");
+				<% } %>
+
+				// display offline page, all the time
+				// EXCEPT display BOT in 9pm-10pm in April 2017
+				if(now.getHours()<21) {         //WHITELIST 9pm-12pm for chatbot                
+					<%if (process.env.DEVELOPMENT !== '1') { %>
+						window.location.replace("http://new.digi.com.my/webchat");
+					<% } %>
+				}
+				// else, launch Chatbot
+				BotChat.App({
+					directLine: {
+						token: "<%= token %>"
+					},
+					user: { id: 'Me' },
+					bot: { id: 'aura' },
+				}, document.getElementById("BotChatGoesHere"));
+			</script>
+		</div>
+
+    </body>
+</html>

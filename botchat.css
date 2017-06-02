@@ -1,0 +1,678 @@
+/* reset */
+body .wc-app, .wc-app button, .wc-app input, .wc-app textarea {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 15px; }    /* modified by Chin 28 Apr 2017 */
+
+.wc-app button {
+  background-color: #FFFFFF;
+  border: 1px solid #0073de;    /* modified by Chin 3 May 2017 */
+  border-radius: 6px;    /* chin modified 28 Apr 2017 */
+  color: #0073de;
+  cursor: pointer;
+  outline: none;
+  transition: color .3s ease, background-color .3s ease; }
+
+.wc-app h1, .wc-app h2, .wc-app h3, .wc-app h4, .wc-app p, .wc-app ul, .wc-app ol {
+  margin: 0;
+  padding: 0; }
+
+.wc-app audio, .wc-app video {
+  display: block; }
+
+/* docking */
+.wc-hidden {
+  visibility: hidden; }
+
+.wc-header {
+  background-color: #FFE227;
+  box-shadow: 0 1px rgba(0, 0, 0, 0.2);
+  box-sizing: content-box;
+  color: #000;
+  font-weight: 500;
+  height: 30px;
+  left: 0;
+  letter-spacing: 0.5px;
+  padding: 8px 8px 0 8px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 1; }
+
+.wc-header-icon{
+
+}
+.wc-header-text {
+  position: absolute;
+  left: 45px;
+  margin-top: 4px;
+}
+.wc-header-menu {
+  /*margin-left: 40px;          /* for main menu at bottom*/
+  /*float: left;                /* for main menu at bottom*/
+  position: absolute;
+  right: 10px;
+}
+.wc-header-menu:hover {
+  background-color: #0073de;
+  color: #FFFFFF;
+}
+.wc-popup {
+  z-index: 2;
+  height: 100%;
+  width: 100%;
+  background-image: url("http://bot.digi.com.my/images/FFFFFF-0.9.png");
+  text-align: center;
+  position: fixed;
+  margin: -8px;
+  display:none;
+}
+.wc-popup-window {
+  height: 300px;
+  width: 360px;
+  top: 50%;
+  left: 50%;
+  margin-top: -150px;
+  margin-left: -180px;
+  background-color: #ffcc33;	
+  box-shadow: 1px 2px 10px rgba(100, 100, 100, .3);
+  position:fixed;
+  font-family: 'Segoe UI', sans-serif;
+  text-align: center;
+  font-size: 23px;
+}
+.wc-popup-window-header {
+  height: 50px;
+  width: 100%;
+  padding-top: 15px;
+}
+.wc-popup-window-body{
+  background-color: #FFFFFF;    /* modified by Chin 3 May 2017 */
+  font-size: 14pt;
+  height: 235px;
+}
+.wc-feedback-text{
+  float: left;
+  margin-left: 22px;
+  width: 300px;
+}
+.wc-popup-button {
+  background-color: #FFFFFF;    /* modified by Chin 3 May 2017 */
+  color: #0073de;    /* modified by Chin 28 Apr 2017 */
+  font-weight: 600;  /* modified by Chin 28 Apr 2017 */
+  min-height: 32px;
+  width: 120px;      /* modified by Chin 9 May 2017 for avatar*/
+  margin-top: 20px;		
+  padding: 0 16px;
+  border-radius: 8px;/* Chin added 28 Apr 2017 */
+  font-size: 14px; } /* Chin added 5 May  2017 */
+.wc-popup-button:hover {
+  background-color: #0073de;    /* modified by Chin 3 May 2017 */
+  border-color: #0073de;        /* modified by Chin 3 May 2017 */
+  color: #FFFFFF; }             /* modified by Chin 3 May 2017 */
+.wc-popup-button:active {
+  background-color: #0073de;
+  border-color: #0073de;
+  color: #fff; }
+
+.rating-icon {
+  font-family: FontAwesome;
+  content: "\f118";
+}
+.rating { 
+  border: none;
+  float: left;
+  font-size: 18pt;
+}
+
+.rating > input { display: none; } 
+.rating > label:before { 
+  margin: 5px;
+  font-size: 1.25em;
+  font-family: FontAwesome;
+  display: inline-block;
+  content: "\f005";
+}
+
+.rating > .half:before { 
+  content: "\f089";
+  position: absolute;
+}
+
+.rating > label { 
+  color: #ddd; 
+ float: right; 
+}
+
+/***** CSS Magic to Highlight Stars on Hover *****/
+
+.rating > input:checked ~ label, /* show gold star when clicked */
+.rating:not(:checked) > label:hover, /* hover current star */
+.rating:not(:checked) > label:hover ~ label { color: #FFD700;  } /* hover previous stars in list */
+
+.rating > input:checked + label:hover, /* hover current star when changing rating */
+.rating > input:checked ~ label:hover,
+.rating > label:hover ~ input:checked ~ label, /* lighten current selection */
+.rating > input:checked ~ label:hover ~ label { color: #FFED85;  } 
+
+.wc-loading-container {
+  position: relative;
+}
+.wc-loading-container-typing {
+  display: block;
+  position: absolute;
+  top: 8px;
+  left: 40px;
+}
+
+#wc-persistent-menu {
+  height:20px;	
+}
+.wc-time {
+  color: #999;
+  margin-bottom: 10px; }
+
+.wc-message-groups {
+  /*bottom: 90px;		/* change back to 90px to for main menu bar at bottom*/
+  bottom: 50px;		/*Original value*/
+  left: 0;
+  transform: translateY(0);
+  overflow-x: hidden;
+  overflow-y: scroll;
+  padding: 10px;
+  position: absolute;
+  right: 0;
+  top: 38px;
+  transition: transform 0.2s cubic-bezier(0, 0, 0.5, 1); }
+
+.wc-intro-logo {
+  margin: auto;
+  display: block;
+  width: 40%;
+}
+
+.wc-intro-name {
+  text-align: center;
+  font-size: 23px;
+  margin-bottom: 20px;
+  font-weight: 100;
+}
+
+.wc-message-group-content {
+  overflow: hidden; }
+
+.wc-suggested-actions {
+  background-color: #ffffff;
+  bottom: 50px;
+  /*height: 35px;			change back to 0 for main menu bar*/
+  height: 0;			/*original value 0 to remove main menu*/
+  left: 0;
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  transition: height 0.2s cubic-bezier(0, 0, 0.5, 1); }
+  .wc-suggested-actions .wc-hscroll > ul {
+    height: 40px;
+    padding: 2px 3px; }
+    .wc-suggested-actions .wc-hscroll > ul > li {
+      display: inline-block;
+      margin: 2px;
+      max-width: 40%; }
+      .wc-suggested-actions .wc-hscroll > ul > li button {
+        background-color: #fff;
+        color: #3a96dd;
+        min-height: 32px;
+        overflow: inherit;
+        padding: 0 10px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+		border-radius: 10px;
+        width: 100%; }
+      .wc-suggested-actions .wc-hscroll > ul > li button:hover {
+        background-color: #3a96dd;
+        border-color: #3a96dd;
+        color: #FFFFFF; }
+      .wc-suggested-actions .wc-hscroll > ul > li button:active {
+        background-color: #3a96dd;
+        border-color: #3a96dd;
+        color: #fff; }
+  .wc-suggested-actions button.scroll {
+    background-color: #FFE227;    /* Modified by Chin 3 May 2017 */
+    height: 28px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    top: 6px;
+    width: 28px; 
+    border: 0px;}
+  .wc-suggested-actions button.scroll:disabled {
+    display: none; }
+  .wc-suggested-actions button.scroll:hover {
+    background-color: #0073de; }
+
+  .wc-suggested-actions .wc-hscroll-outer {
+  /* allow horizontal scrolling but hide the scrollbar */
+    overflow: hidden;
+    width: 330px;
+    margin: auto;}
+
+  .wc-suggested-actions button.scroll svg {
+    fill: #fff; }
+    .wc-suggested-actions button.scroll svg path {
+      transform: translateY(0px); }
+  .wc-suggested-actions button.scroll.previous {
+    left: 5px; }
+  .wc-suggested-actions button.scroll.next {
+    right: 5px; }
+
+.wc-message-pane.show-actions .wc-message-groups {
+  transform: translateY(-40px); }
+
+.wc-message-pane.show-actions .wc-suggested-actions {
+  height: 40px; }
+
+.wc-console {
+  border: 1px solid #dbdee1; /* 9 May 2017 Chin modified to make input area line thinner */
+  border-radius: 10px;    /* 9 May 2017 Chin added to make input area rounded */
+  bottom: 10px;
+  box-sizing: border-box;
+  height: 40px;        /* 9 May Chin reduced height */
+  width: 90%;          /* 9 May Chin reduced width to 90% */
+  margin: auto;        /* 9 May Chin centered the bubble */
+  left: 0;
+  position: absolute;
+  right: 0; }
+
+/* views */
+.wc-chatview-panel {
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  max-width: 400px;
+  margin: auto;
+  border-left: 1px solid #000;border-right: 1px solid #000;background: #fff;
+}
+
+/* messages */
+.wc-message-wrapper {
+  animation: animationFrames 2s;
+  animation-iteration-count: 1;
+  clear: both;
+  margin-bottom: 10px;
+  overflow: hidden;
+  position: relative;
+  /*transition: max-height 2s ease-in-out;*/ }
+
+@keyframes animationFrames {
+  0% {
+    /*max-height: 0;*/
+    opacity: 0; }
+  20% {
+    opacity: 1; }
+  100% {
+    /*max-height: 2000px;*/ } }
+
+.wc-message {
+  position: relative; }
+
+.wc-message-wrapper.carousel .wc-message {
+  max-width: none;
+  padding-right: 8px; }
+
+.wc-message svg.wc-message-callout {
+  height: 22px;
+  position: absolute;
+  stroke: none;
+  bottom: -4px;                /* Chin modified to put callout arrow to bottom*/
+  width: 6px; }
+
+.wc-message-content {
+  border-radius: 10px;        /* Chin modified 28 Apr 2017 */
+  box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  word-break: break-word; }
+
+.wc-message-content.clickable {
+  cursor: pointer; }
+
+.wc-message-content.selected {
+  box-shadow: 0px 1px 1px 0px #ffa333; }
+
+.wc-message-content img {
+  max-height: 320px;
+  max-width: 100%; }
+
+.wc-message-content .video iframe {
+  border: 0; }
+
+.wc-message-content audio, .wc-message-content video {
+  max-width: 100%; }
+
+.wc-message-content audio + h1, .wc-message-content video + h1 {
+  margin-top: 11px; }
+
+.wc-message-from {
+  clear: both;
+  color: #999;
+  font-size: 11px;
+  margin-top: 5px; }
+
+/* cards */
+.wc-card {
+  background-color: rgba(255, 255, 255, 0); /* modified by Chin 3 May 2017 */
+  font-size: 15px; }
+  .wc-card button {
+    background-color: #FFFFFF;    /* modified by Chin 3 May 2017 */
+    color: #0073de;    /* modified by Chin 28 Apr 2017 */
+    font-weight: 600;  /* modified by Chin 28 Apr 2017 */
+    min-height: 32px;
+    width: 240px;      /* modified by Chin 9 May 2017 for avatar*/
+    padding: 0 16px;
+    border-radius: 10px;/* Chin added 28 Apr 2017 */
+    font-size: 14px; } /* Chin added 5 May  2017 */
+  .wc-card button:hover {
+    background-color: #0073de;    /* modified by Chin 3 May 2017 */
+    border-color: #0073de;        /* modified by Chin 3 May 2017 */
+    color: #FFFFFF; }             /* modified by Chin 3 May 2017 */
+  .wc-card button:active {
+    background-color: #0073de;
+    border-color: #0073de;
+    color: #fff; }
+  .wc-card h1 {
+    font-size: 15px;
+    font-weight: 700; }
+  .wc-card h2 {
+    color: #000000;
+    font-size: 15px;
+    font-weight: normal;
+    margin-bottom: 8px; }
+  .wc-card p {
+    padding-bottom: 10px; }
+  .wc-card h1, .wc-card h2, .wc-card p {
+    margin-left: 8px;
+    margin-right: 8px; 
+	min-height: 40px;}
+  .wc-card p h2 {
+    /* don't double indent */
+    margin-left: 0; }
+  .wc-card ul.wc-card-buttons {
+    clear: both;
+    display: table; }
+  .wc-card ul.wc-card-buttons li {
+    list-style-type: none;
+    text-align: center;
+    float: left;
+    margin: 1px; }        /* modified by Chin 28 Apr 2017 */
+  .wc-card.hero img {
+    display: block;
+    margin-bottom: 11px; 
+    padding-bottom: 10px;
+    margin: auto;    }    /* Added by Chin 28 Apr 2017 */
+  .wc-card.receipt table {
+    border-collapse: collapse;
+    width: 100%; }
+  .wc-card.receipt th, .wc-card.receipt td {
+    text-align: right;
+    vertical-align: top; }
+  .wc-card.receipt th:first-child, .wc-card.receipt td:first-child {
+    text-align: left; }
+  .wc-card.receipt th {
+    color: #808c95;
+    font-size: inherit;
+    font-weight: normal;
+    line-height: 1.75; }
+  .wc-card.receipt thead tr:last-child th {
+    padding-bottom: 16px; }
+  .wc-card.receipt th[colspan="2"] {
+    color: inherit;
+    font-size: 15px;
+    font-weight: 700; }
+  .wc-card.receipt td {
+    padding: 4px 8px 0 8px; }
+  .wc-card.receipt td img {
+    float: left;
+    margin: 5px 8px 8px 0;
+    max-height: 50px;
+    max-width: 50px; }
+  .wc-card.receipt div.title {
+    font-weight: bolder; }
+  .wc-card.receipt div.subtitle {
+    font-weight: lighter; }
+  .wc-card.receipt tbody tr, .wc-card.receipt tfoot tr {
+    border-top: 1px solid #d2dde5; }
+  .wc-card.receipt tbody tr:first-child, .wc-card.receipt tfoot tr:first-child {
+    border-top-width: 2px; }
+  .wc-card.receipt tfoot td {
+    line-height: 2.25; }
+  .wc-card.receipt tfoot .total {
+    font-weight: bold; }
+  .wc-card.thumbnail img {
+    float: right;
+    margin-bottom: 10px;
+    margin-left: 10px;
+    width: 100px; }
+  .wc-card.signin h1 {
+    margin: 10px 24px 16px 14px; }
+
+/* alternate chat sizes */
+.wc-message {
+  max-width: 75%; }   /* Chin Commented out 17 Apr 2017 to wc-card alignment problem*/
+
+.wc-card {
+  border: 0px solid #d2dde5;   /* Chin modified 28 Apr 2017 */
+  padding: 8px;
+  /*width: 80%;  */               /* Chin modified for Avatar 9 May 2017*/
+}
+
+.wc-wide .wc-card {
+  border: 0px solid #d2dde5;    /* Chin modified 28 Apr 2017 */
+  padding: 8px;
+  width: 398px; }
+
+.wc-narrow .wc-card {
+  border: 0px solid #d2dde5;   /* Chin modified 28 Apr 2017 */
+  padding: 8px;
+  width: 198px; }
+
+/* list */
+.wc-list > .wc-card {
+  margin-top: 8px; }
+
+.wc-list > .wc-card:first-child {
+  margin-top: 0; }
+
+/* horizontal scroll */
+.wc-hscroll-outer {
+  /* allow horizontal scrolling but hide the scrollbar */
+  overflow: hidden;}
+
+.wc-hscroll {
+  /* allow horizontal scrolling but hide the scrollbar */
+  overflow-x: scroll;
+  overflow-y: hidden; }
+
+.wc-hscroll > ul {
+  white-space: nowrap; }
+
+.wc-hscroll > ul > li {
+  display: inline-block;
+  vertical-align: top;
+  white-space: normal; }
+
+/* carousel */
+.wc-carousel {
+  position: relative; 
+  width: 263px;}
+  .wc-carousel button.scroll {
+    background-color: #FFE227;    /* Modified by Chin 3 May 2017 */
+    height: 28px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    top: 50%;
+    width: 28px; 
+    border: 0px;}
+  .wc-carousel button.scroll:disabled {
+    display: none; }
+  .wc-carousel button.scroll:hover {
+    background-color: #0073de; }
+  .wc-carousel button.scroll svg {
+    fill: #fff; }
+  .wc-carousel button.scroll.previous {
+    left: -25px; }
+  .wc-carousel button.scroll.next {
+    right: -25px; }
+  .wc-carousel .wc-hscroll > ul {
+    margin-left: -4px; }
+  .wc-carousel .wc-hscroll > ul > li {
+    padding: 0 4px; }
+  .wc-carousel .wc-hscroll > ul > li:last-child {
+    padding-right: 0; }
+  .wc-carousel li p {
+    min-height: 4em;
+    white-space: normal; }
+  .wc-carousel-item{
+    width: 263px;}
+
+/* from me */
+.wc-message-from-me {
+  float: right;
+  margin-right: 6px; }
+
+.wc-message-from-me.wc-message-from {
+  text-align: right; }
+
+.wc-message-from-me .wc-message-content {
+  background-color: #0073de;
+  color: #FFFFFF; }
+
+.wc-message-from-me svg.wc-message-callout path {
+  fill: rgba(0, 115, 222, 0); }
+
+.wc-message-from-me svg.wc-message-callout path.point-left {
+  display: none; }
+
+.wc-message-from-me svg.wc-message-callout {
+  right: -6px; }
+
+/* from bot */
+.wc-message-from-bot {
+  float: left;
+  margin-left: 35px; }    /* modified by Chin 9 May 2017 to put avatar*/
+
+.wc-message-from-bot .wc-message-content {
+  background-color: #eceff1;
+  color: #000; 
+  /*width: 90%; */}    /* added by Chin 5 May 2017 */
+
+.wc-message-from-bot svg.wc-message-callout path {
+  fill: #eceff1; }
+
+.wc-message-from-bot svg.wc-message-callout path.point-right {
+  display: none; }
+
+.wc-message-from-bot svg.wc-message-callout {
+  left: -6px; }
+
+/* added by Chin 9 May 2017 to position avatar beside the callout*/
+.wc-message-from-bot-avatar {
+  position: absolute;
+  bottom: 0;
+}
+
+/* console */
+.wc-console > * {
+  position: absolute;
+  top: 0;
+  vertical-align: middle; }
+
+.wc-console label {
+  cursor: pointer;
+  display: inline-block;
+  height: 40px; }
+
+.wc-console svg {
+  fill: #0073de;    /* 9 May 2017 - Chin modified to change arrow color */
+  margin: 8px; }    /* 9 May 2017 - Chin modified adjust arrow position down a bit*/
+
+.wc-console textarea, .wc-console input[type=text] {
+  border: none;
+  height: 100%;
+  outline: none;
+  padding: 0;
+  resize: none;
+  width: 100%; }
+
+.wc-send svg {
+  height: 25px;    /* 9 May 2017 - Chin modified from 18-25 to put in full icon for input */
+  width: 27px; }
+
+.wc-upload svg {
+  height: 18px;
+  width: 26px; }
+
+#wc-upload-input {
+  display: none; }
+
+.wc-textbox {
+  bottom: 0;
+  left: 48px;
+  right: 49px; }
+
+.wc-send {
+  right: 0; }
+
+.wc-console.has-text .wc-send svg {
+  fill: #FFE227; }
+
+/* animation */
+.wc-typing {
+  background-image: url("data:image/gif;base64,R0lGODlhQAAYAPYBAOzv8evu8Ort7+fq7Ons7ujr7eXo6uTn6ebp6+Xn6ebo6uzu8OPm6OTm6OPm5+Tn6N/i4+Ll59/i5N7h4+Hk5uDj5evu7+Hk5d/h49PV18PFx7/BwsfJysXHyMLExdja3Nfa28vNz72/wL7Awc/S08TGyMDCw9TW2NbY2t3g4trd39bZ2szO0M7Q0dnb3djb3Nvd39ve4Nnc3dze4Nrc3t7g4tzf4dXX2d3f4d7h4tnc3tve383P0MrMzs7Q0sjKzNLU1s/R08jKy9DT1NfZ293g4efp68bIyby+v9bZ27q8vdHT1c7R0uvt78nLzM/R0tjb3ens7bO0tbS2t7GztK+xsrW3uK6vsLe4utfa3L/Awtzf4MnLzamqq5WWl66wsbm7vNrd3uXo6a2ur6yurp2en6KjpKusrZ+goKeoqers7urt7peXmIGBgYSEhHx8fJmamqipqnZ2doqLi8XHyY2NjpGSkpOUlJiYmZOTlI+QkJqbm4eIiJucnIuMjP///yH/C05FVFNDQVBFMi4wAwEAAAAh/wtYTVAgRGF0YVhNUDw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNi1jMTM4IDc5LjE1OTgyNCwgMjAxNi8wOS8xNC0wMTowOTowMSAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIDIwMTcgKE1hY2ludG9zaCkiIHhtcE1NOklu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");
+  background-repeat: no-repeat;
+  height: 20px;
+  width: 64px; }
+
+.wc-animate-scroll {
+  left: 0;
+  position: absolute;
+  transition: left .8s ease; }
+
+.wc-animate-scroll-rapid {
+  left: 0;
+  position: absolute;
+  transition: left .4s ease; }
+
+.wc-animate-scroll-near {
+  left: 0;
+  position: absolute;
+  transition: left .3s ease-in-out; }
+
+/* text formats */
+.format-markdown > p {
+  margin-bottom: 0px; 
+  margin-left: 15px;}
+
+.format-markdown code {
+  white-space: pre-wrap; }
+
+.format-markdown + div {
+  margin-top: 8px; }
+
+.format-markdown ol {
+  padding-left: 30px;
+  /* numbers are right-aligned to the period */ }
+
+.format-markdown ul {
+  padding-left: 33px; }
+
+/* browser scrollbar customization */
+.wc-app ::-webkit-scrollbar {
+  width: 8px; }
+
+.wc-app ::-webkit-scrollbar * {
+  background-color: transparent; }
+
+.wc-app ::-webkit-scrollbar-thumb {
+  background-color: #dbdee1; }
