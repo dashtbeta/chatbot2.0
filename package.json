@@ -26,6 +26,7 @@
     "applicationinsights": "^0.19.0",
     "body-parser": "^1.15.2",
     "botbuilder": "^3.8.3",
+    "botbuilder-azure": "^3.0.2",
     "botframework": "^0.18.0",
     "cookie-parser": "^1.4.3",
     "dotenv": "^2.0.0",

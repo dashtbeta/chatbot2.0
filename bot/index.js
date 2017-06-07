@@ -19,6 +19,10 @@ var apiai = require('apiai');
 var apiai_app = apiai(process.env.APIAI_CLIENT_ACCESS_TOKEN);
 
 
+//var tableName = 'BotStore';
+//var azureTableClient = new azure.AzureTableClient(tableName);
+//var tableStorage = new azure.AzureBotStorage({ gzipData: false }, azureTableClient);
+
 ////////////////////////////////////////////////////////////////////////////
 // Global Variables
 // Session Data
@@ -62,7 +66,8 @@ var bot = new builder.UniversalBot(connector, [
         session.endConversation("Please type Menu");
     }
 
-]).set('autoBatchDelay',1000);
+]).set('autoBatchDelay',100);
+//.set('storage', tableStorage);
 // Require Functions
 //bot.library(require('./validators').createLibrary());
 bot.library(require('./dialogs/uidemo').createLibrary());
@@ -153,6 +158,14 @@ function trackBotEvent(session, description, dialog_state, storeLastMenu) {
         session.privateConversationData[DialogId] = session.message.address.id;
     }
 
+	logConversation(session,
+					session.message.address.conversation.id, 
+					session.privateConversationData[DialogId],
+					dialog_state,
+					session.privateConversationData[LastMenu]);	
+}
+
+function logConversation(session, conversationId, dialogId, dialogState, chatLog) {
     var options = {
         method: 'POST',
         url: process.env.CHATBOT_LOG_URL,
@@ -162,43 +175,42 @@ function trackBotEvent(session, description, dialog_state, storeLastMenu) {
             data: '{\
 "command": "update_chat_log",\
 "auth_key": "' + process.env.CHATBOT_LOG_AUTH_KEY+ '",\
-"chat_id": "'  + session.message.address.conversation.id+ '",\
-"dialog_id": "'+ session.privateConversationData[DialogId]+ '",\
-"dialog_state":"' + dialog_state + '",\
+"chat_id": "'  + conversationId+ '",\
+"dialog_id": "'+ dialogId+ '",\
+"dialog_state":"' + dialogState + '",\
 "dialog_type":"",\
 "dialog_input":"",\
-"chat_log": "'+session.privateConversationData[LastMenu]+'"}'
+"chat_log": "'+chatLog+'"}'
         }
     };
 
-    if (process.env.LOGGING>0) {
-        try{
-            request(options, function (error, response, body) { // Send to DB if this is Production Environment
-                if (process.env.DEVELOPMENT) {
-                    //console.log("DB Log:" + body);              // Log if this is Production & Development Mode
-                }
-            })
-        } catch (e) {
-            if (process.env.DEVELOPMENT) {
-                //console.log("cannot log to DB");                // Log if this is Production &Development Environment
-            }
-        }
-    } else {
-        console.log("Logging : " + options.formData.data);  // Log if this is Staging Environment
-    }
+	try{
+		request(options, function (error, response, body) { // Send to DB if this is Production Environment
+		})
+	} catch (e) {
+		console.log("cannot log to DB");                // Log if this is Production &Development Environment
+	}
 }
 
-const logUserConversation = (event) => { console.log('message: ' + event.text + ', user: ' + event.address.user.name);
-};
-// Middleware for logging
+
+bot.dialog('YouThere', [(session)=>{
+    session.dialogData.inactive = setTimeout(()=>{
+        session.send('You there?');
+		console.log('timeout');
+    },3000)
+}])
+
+// Middleware for logging all sent & received messages
 bot.use({
     receive: function (event, next) {
-        logUserConversation(event);
+		// todo: log with session info
+        console.log('Log:User Typed[' + event.text + '] user[' + event.address.user.name + ']');
         next();
-//    },
-//    send: function (event, next) {
-//        logUserConversation(event);
-//        next();
+    },
+    send: function (event, next) {
+		// todo: log with session info
+        console.log('Log:Bot Replied' + event.text + ', user: ' + event.address.user.name);
+        next();
     }
 });
 
@@ -209,45 +221,14 @@ bot.dialog('intro', [
         session.privateConversationData[NumOfFeedback] = 0;
         session.privateConversationData[DialogId] = session.message.address.id;
 
-        trackBotEvent(session, 'intro', 0);
-        
-        session.send("Hello, I'm Yello! Nice to meet you. I'm here 9pm-12am every day to help you on all things Digi.");
-        session.send("I'm continuously learning to serve you better, so please be patient with me");
-
-        var respCards = new builder.Message(session)
-            .attachmentLayout(builder.AttachmentLayout.carousel)
-            .attachments([
-                new builder.HeroCard(session)
-                .text('You can ask me anything about Digi\'s products.')
-                .buttons([
-                    builder.CardAction.imBack(session, "Let's get started", "Let's get started"),
-                    builder.CardAction.imBack(session, "Contact our Customer Service", "Contact our Customer Service")
-                ])
-            ]);
-        builder.Prompts.choice(session, respCards, AnyResponse, { listStyle:builder.ListStyle.button, maxRetries:MaxRetries, retryPrompt:DefaultErrorPrompt});
+        trackBotEvent(session, 'intro', 0);  
+        session.send(" Hi, my name is Will, your Virtual Assistant.  How may I help you today?");
     },
     function (session, results) {
         session.send(DefaultMaxRetryErrorPrompt);
         session.replaceDialog('menu');
     }
 ]);
-
-//// R - menu
-//bot.dialog('menu', [
-//    function (session) {
-//        
-//        if(session.privateConversationData[NumOfFeedback]>2)    // Get Feedback every 2nd transaction
-//        {
-//            session.privateConversationData[NumOfFeedback] = 0;
-//            session.replaceDialog('getFeedback');
-//        } else {
-//            session.privateConversationData[NumOfFeedback]++;
-//            session.replaceDialog('menu2');            
-//        }
-//    }
-//]).triggerAction({
-//    matches: /^(main menu)|(menu)|(begin)|(Let\'s get started)$/i
-//});
 
 bot.dialog('byemenu', [
     function (session) {
@@ -1909,300 +1890,48 @@ bot.dialog('getInfoFeedback', [
     }
 ])
 
-bot.dialog('CheckMyAccount', [
+bot.dialog('Plan-MobileNumOwnership', [
     function (session) {
-        var currentTime = Date.now();
-        var diffTime = currentTime - session.privateConversationData[ValidatedTime];
-        // OTP will be valid for 1 hour 60*60*1000
-        if((session.privateConversationData[ValidatedTime] == undefined) || diffTime>3600000) 
-        {
-            session.send("Just let us verify your identity for a sec ");
-
-//            session.beginDialog('validators:phonenumber');
-        } else {
-            session.replaceDialog('PrepaidAccountOverview');
-            return;
-
-        }
-    },
-    function (session, results) {
-        session.privateConversationData[PhoneNumber] = results.response;
-        session.privateConversationData[OneTimePin] = GenerateOtp2(session.privateConversationData[PhoneNumber]);
-
-        if (process.env.DEVELOPMENT) {
-            console.log("OTP is " + session.privateConversationData[OneTimePin]);
-        }
-
-        builder.Prompts.text(session, "I have just sent the One Time Code to you. Can you please key in the 4 digit code?");
-    },
-    function (session, results) {
-        if(session.privateConversationData[OneTimePin] == results.response)
-        {
-            session.privateConversationData[ValidatedTime] = Date.now();
-            session.replaceDialog('PrepaidAccountOverview');
-            return;
-        }
-        builder.Prompts.text(session, "Ops, the OTP is wrong. Can you please key in the 4 digit code?");
-    },
-    function (session, results) {   // OTP Wrong, Retry second time
-        if(session.privateConversationData[OneTimePin] == results.response)
-        {
-            session.privateConversationData[ValidatedTime] = Date.now();
-            session.replaceDialog('PrepaidAccountOverview');
-            return;
-        }
-        session.send('Ops, the OTP is wrong. Sorry, I\'ll bring you back to our Main Menu');
-        session.replaceDialog('menu');
+        session.send("If you have the phone with you, you can check this information on MyDigi app. If not, you can talk to my Human Friend from 9am to 6pm. ");
     }
 ]).triggerAction({
-    matches: /^(chinyankeat)$/i
+    matches: /.*(this mobile number).*|.*(this number).*|.*(Mobile number ownership for).*/i
 });
 
-// Generate OTP using SBP API
-function GenerateOtp(phoneNumber){
-    
-    var randomnum = math.randomInt(1,9999);
-    // add leading zero in front
-    var randomotp = "0000" + randomnum; 
-    randomotp = randomotp.substr(randomotp.length-4);
-    
-    var args = {
-        data:  "{\
-                 \"ref_id\": \"TEST123456#\",\
-                 \"service_id\": \"DG_HELLOWIFI\",\
-                 \"msisdn\": \"" + phoneNumber + "\",\
-                 \"status\": \"1\",\
-                 \"transaction_id\": \"\",\
-                 \"price_code\": \"VAS220000\",\
-                 \"keyword\": \"test\",\
-                 \"source_mobtel\": \"20000\",\
-                 \"sender_name\": \"\",\
-                 \"sms_contents\": [\
-                  {\
-                   \"content\": \"RM0.00 Digi Virtual Assistant. Your one time PIN is " + randomotp + ", valid for the next 3 minutes\",\
-                   \"ucp_data_coding_id\": \"0\",\
-                   \"ucp_msg_type\": \"3\",\
-                   \"ucp_msg_class\": \"3\"\
-                  }\
-                 ]\
-                }",
-        headers: { Authorization: "Basic " + process.env.SBP_SMS_AUTHORIZATIONKEY,
-                   "Content-Type": "application/json"}
-    };
-    if (process.env.DEVELOPMENT != 1) { // send out real OTP SMS only if production mode
-        restclient.post(process.env.SBP_SMS_SENDURL + phoneNumber, args, function(data,response) {});
-    }
-    return randomotp;
-}
 
-// Generate OTP using API Gateweay
-function GenerateOtp2(phoneNumber){
-
-    var randomnum = math.randomInt(1,9999);
-    // add leading zero in front for the random OTP
-    var randomotp = "0000" + randomnum; 
-    randomotp = randomotp.substr(randomotp.length-4);    
-    
-    // Token Expired
-    if (ApiGwAuthTokenExpiry < Date.now()) {
-        GetSmsAuthToken();
-    }
-    
-    // Generate unique ID for API Gateway's ID
-    ApiGwSmsCounter++;
-    if (ApiGwSmsCounter>99999) {
-        ApiGwSmsCounter = 0;
-    }
-    var SmsCounter = "00000" + ApiGwSmsCounter; 
-    SmsCounter = SmsCounter.substr(SmsCounter.length-5);    
-
-    var options = {
-        method: 'POST',
-        url: process.env.APIGW_URL + '/notifications/v1/sms/vas',
-        headers: {
-//            'postman-token': 'c5791e8d-ad6f-b1f9-8155-7434571289cb',
-            'cache-control': 'no-cache',
-            'content-type': 'application/json',
-            authorization: 'Bearer '+ ApiGwAuthToken
-        },
-        body: {
-            sourceId: 'EXPLORER',
-            correlationId: 'EXPLOR' + SmsCounter,
-            id: {
-                type: 'MSISDN',
-                value: '6' + phoneNumber,
-            },
-            message: 'RM0.00 Digi Virtual Assistant. Your one time PIN is ' + randomotp + ', valid for the next 3 minutes'
-        },
-        'json': true
-    };
-
-//    if (process.env.DEVELOPMENT != 1) { // send out real OTP SMS only if production mode
-        try {
-            request(options, function (error, response, body) {
-                //console.log('Sent to APIGW '+ JSON.stringify(response));
-            })
-        } catch (e) {
-            //console.log('test2 '+ options);        
-        }
-//    }
-    return randomotp;
-}
-
-// Generate OTP using API Gateweay
-function GenerateOtp3(phoneNumber){
-    var randomnum = math.randomInt(1,9999);
-    // add leading zero in front for the random OTP
-    var randomotp = "0000" + randomnum; 
-    randomotp = randomotp.substr(randomotp.length-4);    
-    
-    // Token Expired
-    if (ApiGwAuthTokenExpiry < Date.now()) {
-        GetSmsAuthToken();
-    }
-    
-    // Generate unique ID for API Gateway's ID
-    ApiGwSmsCounter++;
-    if (ApiGwSmsCounter>99999) {
-        ApiGwSmsCounter = 0;
-    }
-    var SmsCounter = "00000" + ApiGwSmsCounter; 
-    SmsCounter = SmsCounter.substr(SmsCounter.length-5);    
-
-    // Generate unique ID for API Gateway's ID
-    ApiGwSmsCounter++;
-    if (ApiGwSmsCounter>99999) {
-        ApiGwSmsCounter = 0;
-    }
-    var SmsCounter = "00000" + ApiGwSmsCounter; 
-    SmsCounter = SmsCounter.substr(SmsCounter.length-5);    
-    
-    var options = {
-        method: 'POST',
-        url: 'http://localhost:8080/demo/api/apigwsendsms/',
-        headers: {
-            'cache-control': 'no-cache',
-            'content-type': 'application/json',
-            authorization: 'Bearer ' + ApiGwAuthToken
-        },
-        body: {
-            msisdn: '6' + phoneNumber,
-            correlationId: 'EXPLOR' + SmsCounter,
-            authorizationToken: ApiGwAuthToken,
-            message: 'RM0.00 Digi Virtual Assistant. Your one time PIN is ' + randomotp + ', valid for the next 3 minutes'
-        },
-        json: true
-    };
-
-//    if (process.env.DEVELOPMENT != 1) { // send out real OTP SMS only if production mode
-        try {
-            request(options, function (error, response, body) {
-                //console.log('Sent to APIGW '+ JSON.stringify(response));
-            })
-        } catch (e) {
-            //console.log('test2 '+ options);        
-        }
-//    }
-    return randomotp;
-}
-
-function GetSmsAuthToken(){
-    var options = {
-        method: 'POST',
-        url: process.env.APIGW_URL + '/oauth/v1/token',
-        headers: {
-            'cache-control': 'no-cache',
-            'content-type': 'application/x-www-form-urlencoded'
-        },
-        form: {
-            client_id: process.env.APIGW_SMS_AUTH_CLIENT_ID,
-            client_secret: process.env.APIGW_SMS_AUTH_CLIENT_SECRET,
-            grant_type: 'client_credentials',
-            expires_in: '86400'
-        }
-    };
-
-    try {
-        request(options, function (error, response, body) {
-            if (!error) {
-                var ApiGwAuth = JSON.parse(body);
-                if(ApiGwAuth.status == 'approved'){
-                    var ApiGwAuth = JSON.parse(body);
-                    ApiGwAuthToken = ApiGwAuth.accessToken;
-                    ApiGwAuthTokenExpiry = Date.now() + 23*50*60*1000;   // Expire in 24 hours. Renew Token 10 mins before expiry 
-
-                    console.log('Token = ' + ApiGwAuthToken + ' expiry in ' + ApiGwAuthTokenExpiry);            
-                }                
-            }
-        });
-    } catch (e) {        
-    }
-}
-
-// get auth token using ChatbotIod
-function GetSmsAuthToken2(){
-    var options = {
-        method: 'GET',
-        url: 'http://localhost:8080/demo/api/apigwtoken/',
-        headers: {
-            'cache-control': 'no-cache',
-            authorization: 'Basic YmlsbDphYmMxMjM='
-        }
-    };
-    try {
-        request(options, function (error, response, body) {
-            if (!error) {
-                var ApiGwSmsAuth = JSON.parse(body);
-                if(ApiGwSmsAuth.status == 'approved'){
-                    var ApiGwAuth = JSON.parse(body);
-                    ApiGwAuthToken = ApiGwSmsAuth.accessToken;
-                    ApiGwAuthTokenExpiry = Date.now() + 23*50*60*1000;   // Expire in 24 hours. Renew Token 10 mins before expiry 
-
-                    console.log('Token = ' + ApiGwAuthToken + ' expiry in ' + ApiGwAuthTokenExpiry);            
-                }                
-            } else {
-            }
-        });
-    } catch (e) {        
-    }
-}
-
-
-
-// R.0.4.1.1 - menu | PrepaidDialog  | MyAccountPrepaid | OneTimeCode | PrepaidAccountOverview
-bot.dialog('PrepaidAccountOverview', [
+bot.dialog('Plan-AddOn-Topup', [
     function (session) {
-        builder.Prompts.choice(session, "What can we help you with?", 'Credit Balance|Internet Quota|Talktime Services|Itemized Usage|Reload|Add On', { listStyle: builder.ListStyle.button });
-    },
-    function (session, results) {
-        switch (results.response.index) {
-        case 0: // Credit Balance
-        case 1: // Internet Quota
-        case 2: // Talktime Services
-        case 3: // Itemized Usage
-        case 4: // Reload
-        case 5: // Add On
-            session.send("Coming Soon!!");
-        default:
-            session.send("Sorry, I didn't quite get that.");
-            break;
-        }
-    }
-])
+        session.send("You can do this via the MyDigi app or you can dial *200*2");
+        var respCards = new builder.Message(session)
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments([
+                new builder.HeroCard(session)
+				.title("Step 1 of 3")
+                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Reload-Page2.png') ])
 
-////////////////////////////////////////////////////////////////////////////////////////
-// This menu will act like catch all if it couldn't match the expressions above
-// we will forward these to LUIS or API.AI
-function findStackAction(routes, name) {
-    for (var i = 0; i < routes.length; i++) {
-        var r = routes[i];
-        if (r.routeType === builder.Library.RouteTypes.StackAction &&
-            r.routeData.action === name) {
-                return r;
-        }
+				,new builder.HeroCard(session)
+				.title("Step 2 of 3")
+                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Reload-Page3.png') ])
+				
+                ,new builder.HeroCard(session)
+				.title("Step 3 of 3")
+                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Reload-Page4.png') ])
+				
+            ]);
+		session.send(respCards);		
     }
-    return null;
-}
+]).triggerAction({
+    matches: /.*(purchase internet).*|.*(quota topup).*|.*(quota top-up).*/i
+});
+
+bot.dialog('Plan-HappyHour', [
+    function (session) {
+        session.send("If you mean hourly data passes, you can check them out over here. Psst, you might find some exclusive passes on the MyDigi app. Just check them out on the add on page!");
+    }
+]).triggerAction({
+    matches: /.*(happy hour data).*/i
+});
+
 
 bot.dialog('CatchAll', [
     function (session) {
@@ -2216,18 +1945,27 @@ bot.dialog('CatchAll', [
 			if(response.result.action==undefined){
 				session.send("Let's get back to our chat on Digi");
 			} else {		// We have response from API.AI
-				console.log("API.AI [" +response.result.resolvedQuery + '][' + response.result.action + '][' + response.result.score + ']['  + response.result.fulfillment.speech + ']');
+				console.log("API.AI [" +response.result.resolvedQuery + '][' + response.result.action + '][' + response.result.score + ']['  + response.result.fulfillment.speech + '][' + response.result.metadata.intentName + ']');
 	//			console.log('API.AI response text:'+ response.result.fulfillment.speech);
 	//			console.log('API.AI response text:'+ response.result.fulfillment.messages[0].speech);
 	//			console.log('API.AI response:'+ JSON.stringify(response.result));
-				if(response.result.fulfillment.speech.length>0) {
-					session.send(response.result.fulfillment.speech);				
-				} else {
-					session.send("Let's get back to our chat on Digi");
+				
+				// Flow when API.ai returns
+				// 1) Try to call the intent. 
+				// 2) If intent not exist, check if there is fulfillment speech and display that default speech
+				// 3) If fulfillment speech does not exist, display default "Let's get back to our chat on Digi" 
+				try {
+					session.replaceDialog(response.result.metadata.intentName);
+				} catch (e) {
+					console.log("Fallback due to Unknown API.ai Intent [" + response.result.metadata.intentName + ']');
+					if(response.result.fulfillment.speech.length>0) {
+						session.send(response.result.fulfillment.speech);				
+					} else {
+						session.send("Let's get back to our chat on Digi");
+					}
 				}
 			}
 		});
-
 		request.on('error', function(error) {
 			console.log('API.AI error:'+error);
 			session.send("Let's get back to our chat on Digi");
