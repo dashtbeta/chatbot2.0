@@ -17,6 +17,7 @@ var emoji = require('node-emoji');
 
 var apiai = require('apiai'); 
 var apiai_app = apiai(process.env.APIAI_CLIENT_ACCESS_TOKEN);
+var apiai_error_timeout = 0;
 
 
 //var tableName = 'BotStore';
@@ -222,7 +223,7 @@ bot.dialog('intro', [
         session.privateConversationData[DialogId] = session.message.address.id;
 
         trackBotEvent(session, 'intro', 0);  
-        session.send(" Hi, my name is Will, your Virtual Assistant.  How may I help you today?");
+        session.send(" Hi, my name is **Will**, your *Virtual Assistant*. \n\n How may I help you today?");
     },
     function (session, results) {
         session.send(DefaultMaxRetryErrorPrompt);
@@ -575,7 +576,7 @@ bot.dialog('Plan-PostpaidBudget', [
     }
 ]).triggerAction({
     matches: /.*(limited budget).*|.*(don't want to pay so much).*/i
-});				
+});
 
 bot.dialog('Plan-Prepaid', [
     function (session) {
@@ -602,7 +603,7 @@ bot.dialog('Plan-Prepaid', [
     }
 ]).triggerAction({
     matches: /.*(prepaid plan).*|.*(prepaid package).*|.*(plan validity).*|.*(plan valid).*/i
-});										
+});
 					
 bot.dialog('Plan-WeekendData', [
     function (session) {
@@ -610,7 +611,7 @@ bot.dialog('Plan-WeekendData', [
     }
 ]).triggerAction({
     matches: /.*(weekend data).*/i
-});											
+});
 
 bot.dialog('Plan-Competitor', [
     function (session) {
@@ -765,51 +766,183 @@ bot.dialog('Plan-ChangePostpaidToPrepaid', [
 ]).triggerAction({
     matches: /.*(postpaid to prepaid).*/i
 });	
+
+
+bot.dialog('Plan-Family', [
+    function (session) {
+        session.send("If you would like to get a supplementary line, visit us at any of our stores. We'll take care of the rest.");
+        var respCards = new builder.Message(session)
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments([
+				new builder.HeroCard(session)
+				.title("Supplementary line")
+				.buttons([
+					builder.CardAction.openUrl(session, 'http://new.digi.com.my/postpaid/family-plans', 'Find Out More')
+				])
+            ]);
+		session.send(respCards);		
+    }
+]).triggerAction({
+    matches: /.*(supplementary plan).*|.*(family plan).*/i
+});	
+
+bot.dialog('Plan-Buddyz', [
+    function (session) {
+        session.send("I see you have a question about prepaid. Find out more over here");
+        var respCards = new builder.Message(session)
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments([
+				new builder.HeroCard(session)
+				.title("Digi Prepaid Live")
+                .images([ builder.CardImage.create(session, imagedir + '/images/prepaid-live.jpg') ])
+				.buttons([
+					builder.CardAction.openUrl(session, 'https://new.digi.com.my/prepaid-plans', 'Find Out More')
+				])
+				
+                ,new builder.HeroCard(session)
+				.title("Digi Prepaid Best")
+                .images([ builder.CardImage.create(session, imagedir + '/images/prepaid-best.jpg') ])
+				.buttons([
+					builder.CardAction.openUrl(session, 'https://new.digi.com.my/prepaid-plans', 'Find Out More')	
+				])
+            ]);
+		session.send(respCards);		
 		
+    }
+]).triggerAction({
+    matches: /.*(buddyz).*|.*(buddys).*/i
+});	
+
+
+bot.dialog('Plan-Business', [
+    function (session) {
+        session.send("Thank you for your interest. Please click on the link to leave your details with us. Our Digi Authourized Business Representative will get back to you as soon as possible.");
+        var respCards = new builder.Message(session)
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments([
+				new builder.HeroCard(session)
+				.title("Digi Business Plans")
+				.buttons([
+					builder.CardAction.openUrl(session, 'http://new.digi.com.my/business-overview', 'Business Plan Details')
+				])
+            ]);
+		session.send(respCards);		
+		
+    }
+]).triggerAction({
+    matches: /.*(business).*/i
+});	
+
+
+bot.dialog('Plan-CancelAutobilling', [
+    function (session) {
+        session.send("To do that, you can walk in any of our Digi Store, or call in to our Digi Helpline at  016 2211 800 but we strongly recommend that you stay on autobilling.");
+    }
+]).triggerAction({
+    matches: /.*(cancel autobilling).*|.*(cancel auto billing).*|.*(stop auto billing).*/i
+});	
+
+bot.dialog('Plan-Autobilling', [
+    function (session) {
+        session.send("Have your Digi bill charged to your credit, charge or debit card each month! No hassle at all. Here's the link to find out more:");
+        var respCards = new builder.Message(session)
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments([
+				new builder.HeroCard(session)
+				.title("Autobilling")
+				.buttons([
+					builder.CardAction.openUrl(session, 'http://new.digi.com.my/bill-payment', 'Find Out More')
+				])
+            ]);
+		session.send(respCards);		
+		
+    }
+]).triggerAction({
+    matches: /.*(autobilling).*|.*(auto billing).*/i
+});	
+
+bot.dialog('Plan-AutoReload', [
+    function (session) {
+        session.send("We have a few ways to help you. You can reload online here: (https://store.digi.com.my/storefront/reload-details.ep). Or do it anytime and anywhere on the MyDigi app. ( link to downlaod app)");
+    }
+]).triggerAction({
+    matches: /.*(auto reload).*|.*(autoreload).*/i
+});	
+
+bot.dialog('printenv', [
+    function (session) {
+		session.send("here are the settings: ");
+		session.send(" ♥ APP_SECRET:" + process.env.APP_SECRET +
+					" \n\n SBP_SMS_AUTHORIZATIONKEY :" + process.env.SBP_SMS_AUTHORIZATIONKEY +
+					" \n\n SBP_SMS_SENDURL :" + process.env.SBP_SMS_SENDURL +
+					" \n\n APIGW_URL:" + process.env.APIGW_URL +
+					" \n\n APIGW_SMS_AUTH_CLIENT_ID:" + process.env.APIGW_SMS_AUTH_CLIENT_ID +
+					" \n\n APIGW_SMS_AUTH_CLIENT_SECRET:" + process.env.APIGW_SMS_AUTH_CLIENT_SECRET +
+					" \n\n CHATBOT_LOG_AUTH_KEY:" + process.env.CHATBOT_LOG_AUTH_KEY +
+					" \n\n CHATBOT_LOG_URL:" + process.env.CHATBOT_LOG_URL +
+					" \n\n DEVELOPMENT:" + process.env.DEVELOPMENT +
+					" \n\n LOGGING:" + process.env.LOGGING +
+					" \n\n APPINSIGHTS_INSTRUMENTATIONKEY:" + process.env.APPINSIGHTS_INSTRUMENTATIONKEY +
+					" \n\n OFFLINE:" + process.env.OFFLINE +
+					" \n\n APIAI_CLIENT_ACCESS_TOKEN:" + process.env.APIAI_CLIENT_ACCESS_TOKEN +
+					" \n\n APIAI_ERROR_TIMEOUT:" + process.env.APIAI_ERROR_TIMEOUT);
+	}
+]).triggerAction({
+    matches: /^(printEnv)$/
+});
+
 bot.dialog('CatchAll', [
     function (session) {
 
-//console.log("text: "+session.message.text + apiai_app);
-		var request = apiai_app.textRequest(session.message.text, {
-			sessionId: `${math.randomInt(100000,999999)}`
-		});
+		
+		if (apiai_error_timeout < Date.now()) {
+			apiai_error_timeout = 0;	// Reset timeout if prevously set to some value
+			var randSessionId = '000000' + math.randomInt(100000,999999);
 
-		request.on('response', function(response) {
-			if(response.result.action==undefined){
-				session.send("Let's get back to our chat on Digi");
-			} else {		// We have response from API.AI
-				console.log("API.AI [" +response.result.resolvedQuery + '][' + response.result.action + '][' + response.result.score + ']['  + response.result.fulfillment.speech + '][' + response.result.metadata.intentName + ']');
-	//			console.log('API.AI response text:'+ response.result.fulfillment.speech);
-	//			console.log('API.AI response text:'+ response.result.fulfillment.messages[0].speech);
-	//			console.log('API.AI response:'+ JSON.stringify(response.result));
-				
-				// Flow when API.ai returns
-				// 1) Try to call the intent. 
-				// 2) If intent not exist, check if there is fulfillment speech and display that default speech
-				// 3) If fulfillment speech does not exist, display default "Let's get back to our chat on Digi" 
-				try {
-					session.replaceDialog(response.result.metadata.intentName);
-				} catch (e) {
-					console.log("Fallback due to Unknown API.ai Intent [" + response.result.metadata.intentName + ']');
-					if(response.result.fulfillment.speech.length>0) {
-						session.send(response.result.fulfillment.speech);				
-					} else {
-						session.send("Let's get back to our chat on Digi");
+			var request = apiai_app.textRequest(session.message.text, {
+				sessionId: randSessionId
+			});
+
+			request.on('response', function(response) {
+				if(response.result.action==undefined){
+					session.send("Let's get back to our chat on Digi");
+				} else {		// We have response from API.AI
+					console.log("API.AI [" +response.result.resolvedQuery + '][' + response.result.action + '][' + response.result.score + ']['  + response.result.fulfillment.speech + '][' + response.result.metadata.intentName + ']');
+					//	console.log('API.AI response text:'+ response.result.fulfillment.speech);
+					//	console.log('API.AI response text:'+ response.result.fulfillment.messages[0].speech);
+					//	console.log('API.AI response:'+ JSON.stringify(response.result));
+
+					// Flow when API.ai returns
+					// 1) Try to call the intent. 
+					// 2) If intent not exist, check if there is fulfillment speech and display that default speech
+					// 3) If fulfillment speech does not exist, display default "Let's get back to our chat on Digi" 
+					try {
+						session.replaceDialog(response.result.metadata.intentName);
+					} catch (e) {
+						console.log("Fallback due to Unknown API.ai Intent [" + response.result.metadata.intentName + ']');
+						if(response.result.fulfillment.speech.length>0) {
+							session.send(response.result.fulfillment.speech);				
+						} else {
+							session.send("Let's get back to our chat on Digi");
+						}
 					}
 				}
-			}
-		});
-		request.on('error', function(error) {
-			console.log('API.AI error:'+error);
-			session.send("Let's get back to our chat on Digi");
-		});
+			});
+			request.on('error', function(error) {
+				console.log('API.AI error:'+error);
+				apiai_error_timeout = Date.now() + process.env.APIAI_ERROR_TIMEOUT*1000;	// Do not use NLP for the next 1 day
+				session.send("Let's get back to our chat on Digi");
+			});
 
-		request.end();
+			request.end();
+		} else {
+			// there were error in the last 1 day. Do not query API AI for the next 1 day
+			session.send("Let's get back to our chat on Digi");
+		}
 	}
 ]).triggerAction({
     matches: /^.*$/i
 });
-
 
 
 // Connector listener wrapper to capture site url
