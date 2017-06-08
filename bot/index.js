@@ -900,7 +900,7 @@ bot.dialog('Plan-Broadband', [
 		session.send(respCards);
     }
 ]).triggerAction({
-    matches: /^(broadband1)$/i
+    matches: /^(broadband1)|(compare all)$/i
 });	
 
 bot.dialog('Plan-Broadband2', [
@@ -974,6 +974,7 @@ bot.dialog('Plan-Broadband-30', [
             .suggestedActions(
                 builder.SuggestedActions.create(
                     session,[
+                        builder.CardAction.imBack(session, "Compare all", "Compare all"),
                         builder.CardAction.imBack(session, "Stream FREE", "Stream FREE"),
                         builder.CardAction.imBack(session, "Broadband 60", "Broadband 60"),
                         builder.CardAction.imBack(session, "Broadband 100", "Broadband 100")
@@ -1000,6 +1001,7 @@ bot.dialog('Plan-Broadband-60', [
             .suggestedActions(
                 builder.SuggestedActions.create(
                     session,[
+                        builder.CardAction.imBack(session, "Compare all", "Compare all"),
                         builder.CardAction.imBack(session, "Stream FREE", "Stream FREE"),
                         builder.CardAction.imBack(session, "Stream On Demand", "Stream On Demand"),
                         builder.CardAction.imBack(session, "Broadband 30", "Broadband 30"),
@@ -1027,6 +1029,7 @@ bot.dialog('Plan-Broadband-100', [
             .suggestedActions(
                 builder.SuggestedActions.create(
                     session,[
+                        builder.CardAction.imBack(session, "Compare all", "Compare all"),
                         builder.CardAction.imBack(session, "Stream FREE", "Stream FREE"),
                         builder.CardAction.imBack(session, "Stream On Demand", "Stream On Demand"),
                         builder.CardAction.imBack(session, "Broadband 30", "Broadband 30"),
