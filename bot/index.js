@@ -972,6 +972,7 @@ bot.dialog('Plan-Broadband-30', [
                 builder.SuggestedActions.create(
                     session,[
 						builder.CardAction.openUrl(session, 'https://store.digi.com.my/storefront/product-config.ep?pID=20017&isBundle=n&ppymttype=PREPAID&ptype=BB&_ga=2.144904436.1557397186.1496910913-599147580.1493727367', 'Buy Now'),
+						builder.CardAction.openUrl(session, 'http://new.digi.com.my/broadband', 'Go to website'),
                         builder.CardAction.imBack(session, "Stream FREE", "Stream FREE"),
                         builder.CardAction.imBack(session, "Broadband 60", "Broadband 60"),
                         builder.CardAction.imBack(session, "Broadband 100", "Broadband 100")
@@ -996,6 +997,7 @@ bot.dialog('Plan-Broadband-60', [
                 builder.SuggestedActions.create(
                     session,[
 						builder.CardAction.openUrl(session, 'https://store.digi.com.my/storefront/product-config.ep?pID=90000P&isBundle=y&ppymttype=POSTPAID&ptype=BB&_ga=2.187260008.1557397186.1496910913-599147580.1493727367', 'Buy Now'),
+						builder.CardAction.openUrl(session, 'http://new.digi.com.my/broadband', 'Go to website'),
                         builder.CardAction.imBack(session, "Stream FREE", "Stream FREE"),
                         builder.CardAction.imBack(session, "Stream On Demand", "Stream On Demand"),
                         builder.CardAction.imBack(session, "Broadband 30", "Broadband 30"),
@@ -1021,6 +1023,7 @@ bot.dialog('Plan-Broadband-100', [
                 builder.SuggestedActions.create(
                     session,[
 						builder.CardAction.openUrl(session, 'https://store.digi.com.my/storefront/product-config.ep?pID=90001P&isBundle=y&ppymttype=POSTPAID&ptype=BB&_ga=2.141721458.1557397186.1496910913-599147580.1493727367', 'Buy Now'),
+						builder.CardAction.openUrl(session, 'http://new.digi.com.my/broadband', 'Go to website'),
                         builder.CardAction.imBack(session, "Stream FREE", "Stream FREE"),
                         builder.CardAction.imBack(session, "Stream On Demand", "Stream On Demand"),
                         builder.CardAction.imBack(session, "Broadband 30", "Broadband 30"),
