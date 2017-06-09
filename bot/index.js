@@ -900,44 +900,10 @@ bot.dialog('Plan-Broadband', [
 		session.send(respCards);
     }
 ]).triggerAction({
-    matches: /^(broadband1)|(compare all)$/i
+    matches: /^(broadband1)$/i
 });	
 
 bot.dialog('Plan-Broadband2', [
-    function (session) {
-        session.send("Great choice! Our broadband will provide you with unlimited entertainment");
-        var respCards = new builder.Message(session)
-            .attachmentLayout(builder.AttachmentLayout.carousel)
-            .attachments([
-				new builder.HeroCard(session)
-				.title("Broadband 30")
-                .images([ builder.CardImage.create(session, imagedir + '/images/broadband-30.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'http://new.digi.com.my/broadband', 'Go to website')
-				])
-				
-				,new builder.HeroCard(session)
-				.title("Broadband 60")
-                .images([ builder.CardImage.create(session, imagedir + '/images/broadband-60.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'http://new.digi.com.my/broadband', 'Go to website')
-				])
-
-				,new builder.HeroCard(session)
-				.title("Broadband 100")
-                .images([ builder.CardImage.create(session, imagedir + '/images/broadband-100.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'http://new.digi.com.my/broadband', 'Go to website')
-				])
-            ]);
-		session.send(respCards);
-        session.send("If you would like to get a device with your broadband plan, just click [here](http://new.digi.com.my/broadband-devices) to find out more");
-    }
-]).triggerAction({
-    matches: /^(broadband2)$/i
-});	
-
-bot.dialog('Plan-Broadband3', [
     function (session) {
         session.send("I have 3 broadband plans for you\n\n " +
 					 "* **Broadband 30** comes with a total of 18GB data, suitable for light use\n\n" + 
@@ -957,31 +923,22 @@ bot.dialog('Plan-Broadband3', [
 		session.send(respCards);	
     }
 ]).triggerAction({
-    matches: /^(broadband3)$/i
+    matches: /^(broadband2)$/i
 });	
 
 bot.dialog('Plan-Broadband-30', [
     function (session) {
-        session.send("**Digi Broadband 30** (RM30/month) is a prepaid package, comes with\n\n" + 
-					 "* **10GB** for 19 Stream FREE channels\n\n" + 
-					 "* **8GB** internet quota\n\n" + 
-					 "* *Starter pack is RM38 include RM30 preload value*");
         var respCards = new builder.Message(session)
-            .text("Would you like to \n\n" + 
-				  "* [Buy Now](https://store.digi.com.my/storefront/product-config.ep?pID=20017&isBundle=n&ppymttype=PREPAID&ptype=BB&_ga=2.144904436.1557397186.1496910913-599147580.1493727367)\n\n" + 
-				  "* [Go to Website](http://new.digi.com.my/broadband)\n\n" + 
-				  "or find out more?")
-            .suggestedActions(
-                builder.SuggestedActions.create(
-                    session,[
-                        builder.CardAction.imBack(session, "Compare all", "Compare all"),
-                        builder.CardAction.imBack(session, "Stream FREE", "Stream FREE"),
-                        builder.CardAction.imBack(session, "Broadband 60", "Broadband 60"),
-                        builder.CardAction.imBack(session, "Broadband 100", "Broadband 100")
-                    ]
-                )
-            );
-		session.send(respCards);	
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments([
+				new builder.HeroCard(session)
+				.title("Broadband 30")
+                .images([ builder.CardImage.create(session, imagedir + '/images/broadband-30.jpg') ])
+				.buttons([
+					builder.CardAction.openUrl(session, 'http://new.digi.com.my/broadband', 'Go to website')
+				])
+            ]);
+		session.send(respCards);
     }
 ]).triggerAction({
     matches: /^(broadband 30)$/i
@@ -989,27 +946,18 @@ bot.dialog('Plan-Broadband-30', [
 
 bot.dialog('Plan-Broadband-60', [
     function (session) {
-        session.send("**Digi Broadband 60** (RM60/month) is a comes with\n\n" + 
-					 "* **16GB** for 19 Stream FREE channels\n\n" + 
-					 "* **8GB** for stream on demand channels\n\n" + 
-					 "* **16GB** internet quota");
         var respCards = new builder.Message(session)
-            .text("Would you like to \n\n" + 
-				  "* [Buy Now](https://store.digi.com.my/storefront/product-config.ep?pID=90000P&isBundle=y&ppymttype=POSTPAID&ptype=BB&_ga=2.187260008.1557397186.1496910913-599147580.1493727367)\n\n" + 
-				  "* [Go to Website](http://new.digi.com.my/broadband)\n\n" + 
-				  "or find out more?")
-            .suggestedActions(
-                builder.SuggestedActions.create(
-                    session,[
-                        builder.CardAction.imBack(session, "Compare all", "Compare all"),
-                        builder.CardAction.imBack(session, "Stream FREE", "Stream FREE"),
-                        builder.CardAction.imBack(session, "Stream On Demand", "Stream On Demand"),
-                        builder.CardAction.imBack(session, "Broadband 30", "Broadband 30"),
-                        builder.CardAction.imBack(session, "Broadband 100", "Broadband 100")
-                    ]
-                )
-            );
-		session.send(respCards);	
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments([
+				new builder.HeroCard(session)
+				.title("Broadband 60")
+                .images([ builder.CardImage.create(session, imagedir + '/images/broadband-60.jpg') ])
+				.buttons([
+					builder.CardAction.openUrl(session, 'http://new.digi.com.my/broadband', 'Go to website')
+					,builder.CardAction.openUrl(session, 'http://new.digi.com.my/broadband-devices', 'Device')
+				])
+            ]);
+		session.send(respCards);
     }
 ]).triggerAction({
     matches: /^(broadband 60)$/i
@@ -1017,69 +965,22 @@ bot.dialog('Plan-Broadband-60', [
 
 bot.dialog('Plan-Broadband-100', [
     function (session) {
-        session.send("**Digi Broadband 100** (RM100/month) is a comes with\n\n" + 
-					 "* **50GB** for 19 Stream FREE channels\n\n" + 
-					 "* **10GB** for stream on demand channels\n\n" + 
-					 "* **40GB** internet quota");
         var respCards = new builder.Message(session)
-            .text("Would you like to \n\n" + 
-				  "* [Buy Now](https://store.digi.com.my/storefront/product-config.ep?pID=90001P&isBundle=y&ppymttype=POSTPAID&ptype=BB&_ga=2.141721458.1557397186.1496910913-599147580.1493727367)\n\n" + 
-				  "* [Go to Website](http://new.digi.com.my/broadband)\n\n" + 
-				  "or find out more?")
-            .suggestedActions(
-                builder.SuggestedActions.create(
-                    session,[
-                        builder.CardAction.imBack(session, "Compare all", "Compare all"),
-                        builder.CardAction.imBack(session, "Stream FREE", "Stream FREE"),
-                        builder.CardAction.imBack(session, "Stream On Demand", "Stream On Demand"),
-                        builder.CardAction.imBack(session, "Broadband 30", "Broadband 30"),
-                        builder.CardAction.imBack(session, "Broadband 60", "Broadband 60")
-                    ]
-                )
-            );
-		session.send(respCards);	
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments([
+				new builder.HeroCard(session)
+				.title("Broadband 100")
+                .images([ builder.CardImage.create(session, imagedir + '/images/broadband-100.jpg') ])
+				.buttons([
+					builder.CardAction.openUrl(session, 'http://new.digi.com.my/broadband', 'Go to website')
+					,builder.CardAction.openUrl(session, 'http://new.digi.com.my/broadband-devices', 'Device')
+				])
+            ]);
+		session.send(respCards);
     }
 ]).triggerAction({
     matches: /^(broadband 100)$/i
-});	
-
-bot.dialog('Plan-Stream-Free', [
-    function (session) {
-        var respCards = new builder.Message(session)
-            .text("Digi Broadband's Stream FREE quota can be used to stream *YouTube, YouTube Kids, Daily Motion, Hitz FM, Era, Mix.fm, Ragaa, Sinar.fm, My.fm, Thr, Kool, BFM*")
-            .suggestedActions(
-                builder.SuggestedActions.create(
-                    session,[
-                        builder.CardAction.imBack(session, "Stream On Demand", "Stream On Demand"),
-                        builder.CardAction.imBack(session, "Broadband 30", "Broadband 30"),
-                        builder.CardAction.imBack(session, "Broadband 60", "Broadband 60"),
-                        builder.CardAction.imBack(session, "Broadband 100", "Broadband 100")
-                    ]
-                )
-            );
-		session.send(respCards);	    }
-]).triggerAction({
-    matches: /^(Stream FREE)$/i
-});	
-
-bot.dialog('Plan-Stream-On-Demand', [
-    function (session) {
-        var respCards = new builder.Message(session)
-            .text("Digi Broadband's Stream On Demand can be used to stream on *Dimsum, iflix, HeroTalkies, Tonton, Viu, Astro-Go, HyypTv, Netflix, KKBox, Radio 2008*")
-            .suggestedActions(
-                builder.SuggestedActions.create(
-                    session,[
-                        builder.CardAction.imBack(session, "Stream FREE", "Stream FREE"),
-                        builder.CardAction.imBack(session, "Broadband 30", "Broadband 30"),
-                        builder.CardAction.imBack(session, "Broadband 60", "Broadband 60"),
-                        builder.CardAction.imBack(session, "Broadband 100", "Broadband 100")
-                    ]
-                )
-            );
-		session.send(respCards);	    }
-]).triggerAction({
-    matches: /^(Stream On Demand)$/i
-});	
+});
 
 bot.dialog('printenv', [
     function (session) {
