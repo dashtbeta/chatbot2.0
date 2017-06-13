@@ -1113,10 +1113,9 @@ bot.dialog('printenv', [
 					" \n\n APIGW_SMS_AUTH_CLIENT_SECRET:" + process.env.APIGW_SMS_AUTH_CLIENT_SECRET +
 					" \n\n CHATBOT_LOG_AUTH_KEY:" + process.env.CHATBOT_LOG_AUTH_KEY +
 					" \n\n CHATBOT_LOG_URL:" + process.env.CHATBOT_LOG_URL +
-					" \n\n DEVELOPMENT:" + process.env.DEVELOPMENT +
-					" \n\n LOGGING:" + process.env.LOGGING +
 					" \n\n APPINSIGHTS_INSTRUMENTATIONKEY:" + process.env.APPINSIGHTS_INSTRUMENTATIONKEY +
 					" \n\n OFFLINE:" + process.env.OFFLINE +
+					" \n\n DEVELOPMENT:" + process.env.DEVELOPMENT +
 					" \n\n APIAI_CLIENT_ACCESS_TOKEN:" + process.env.APIAI_CLIENT_ACCESS_TOKEN +
 					" \n\n APIAI_ERROR_TIMEOUT:" + process.env.APIAI_ERROR_TIMEOUT);
 	}

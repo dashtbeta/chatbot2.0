@@ -19,23 +19,20 @@ $( document ).ready(function() {
     $(this).keypress(function (e) {
         feedbackIdleTime = 0;
     });
-	$("#wc-popup-feedback").fadeIn(150);
-
 });
 
-// hide popup URL window if press esc
-$('#wc-popup-url').keypress(function(e){
+$('body').keyup(function(e){
     if(e.which == 27){
-		$("#wc-popup-feedback").fadeOut(150);
+		$('#wc-popup-url').fadeOut(200);
+		$("#wc-popup-feedback").fadeOut(200);		
     }
 });
 
-// hide popup feedback window if press esc
-$('#wc-popup-feedback').keypress(function(e){
-    if(e.which == 27){
-		$("#wc-popup-feedback").fadeOut(150);
-    }
+$('body.a').on('click',function(){
+	alert("abce : " + $(this).attr('href'));
+//    $(this).attr('href', $(this).attr('href'));
 });
+
 
 // Start Feedback Timer whenever there is user interaction with Bot
 function startFeedbackTimer() {
@@ -44,7 +41,7 @@ function startFeedbackTimer() {
 	if((botInteraction == feedbackPopupInteraction) && !feedbackPopupShown) {
 		feedbackPopupShown++;
 		$("#wc-popup-feedback").fadeIn(150);
-		clearInterval(idleInterval);		
+		clearInterval(idleInterval);
 	}
 	
 	if(!feedbackTimerStarted) {	// only start feedback timer once, after user had the first interaction with bot
