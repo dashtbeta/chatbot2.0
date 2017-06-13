@@ -6059,22 +6059,20 @@
                     var e = this,
                         t = "wc-console";
                     
-//                    var element = document.getElementById("start-over-menu");	// main menu at top of chat window
-                    var element = document.getElementById("wc-suggested-actions-id");	// main menu at suggestion action bar
-                    var header_menu_element = document.getElementById("wc-header-menu-id");
-                    if(element && header_menu_element==null) { 
-						var newTH = document.createElement('button');
-						newTH.id = 'wc-header-menu-id';
-						newTH.className = 'wc-header-menu';
-						newTH.innerHTML = 'Main Menu';
-						newTH.onclick = function () {
-							return e.onClickHome()
-						};
-					
-					// Create Main Menu Button
-                        element.appendChild(newTH);
-//                        element.appendChild(newFeedback);
-                    }
+					// main menu at top of chat window
+//                    var element = document.getElementById("wc-suggested-actions-id");	// main menu at suggestion action bar
+//                    var header_menu_element = document.getElementById("wc-header-menu-id");
+//                    if(element && header_menu_element==null) { 
+//						var newTH = document.createElement('button');
+//						newTH.id = 'wc-header-menu-id';
+//						newTH.className = 'wc-header-menu';
+//						newTH.innerHTML = 'Main Menu';
+//						newTH.onclick = function () {
+//							return e.onClickHome()
+//						};
+//					// Create Main Menu Button
+//                        element.appendChild(newTH);
+//                    }
 
 					// Create Popup Window					
                     return this.props.inputText.length > 0 && (t += " has-text"), o.createElement("div", {

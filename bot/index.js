@@ -29,6 +29,7 @@ var apiai_error_timeout = 0;
 // Session Data
 var LastMenu = 'LastMenu';
 var NumOfFeedback = 'NumOfFeedback';
+var UseCatchAll = 'UseCatchAll';
 var DialogId = 'DialogId';
 var DialogState = 'DialogState';
 var imagedir = 'https://yellowchat.azurewebsites.net';
@@ -982,6 +983,125 @@ bot.dialog('Plan-Broadband-100', [
     matches: /^(broadband 100)$/i
 });
 
+bot.dialog('Roaming-Start', [
+    function (session) {
+        session.send("You can start roaming once your roaming status is active. Just make sure that you're attached to our roaming partners.");
+        var respCards = new builder.Message(session)
+            .text("How long have you been with Digi")
+            .suggestedActions(
+                builder.SuggestedActions.create(
+                    session,[
+                        builder.CardAction.imBack(session, "Less than 6 months", "Less than 6 months"),
+                        builder.CardAction.imBack(session, "More than 6 months", "More than 6 months")
+                    ]
+                )
+            );
+		session.send(respCards);
+	}
+]).triggerAction({
+    matches: /.*(on roaming).*|.*(activate roaming).*|.*(on international roaming).*|.*(on my roaming).*|.*(activate my roaming).*/i
+});
+
+bot.dialog('Roaming-Start-LessThan6Months', [
+    function (session) {
+        session.send("You can walk into any Digi Store and my Human Friends will help you with that. Please bring along :\n\n"
+		+ "1) NRIC \n\n"
+		+ "2) Valid Passport \n\n"
+		+ "3) Work Permit (for Non-Malaysian) \n\n");
+	}
+]).triggerAction({
+    matches: /(Less than 6 months)/i
+});
+
+bot.dialog('Roaming-Start-MoreThan6Months', [
+    function (session) {
+        session.send("You can turn on roaming via the MyDigi app. Just follow the steps below");
+        var respCards = new builder.Message(session)
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments([
+				new builder.HeroCard(session)
+				.title("Step 1")
+                .images([ builder.CardImage.create(session, imagedir + '/images/Roaming-MyDigi-Step1.png') ])
+				
+				,new builder.HeroCard(session)
+				.title("Step 2")
+                .images([ builder.CardImage.create(session, imagedir + '/images/Roaming-MyDigi-Step2.png') ])
+				
+				,new builder.HeroCard(session)
+				.title("Step 3")
+                .images([ builder.CardImage.create(session, imagedir + '/images/Roaming-MyDigi-Step3.png') ])
+            ]);
+		session.send(respCards);
+	}
+]).triggerAction({
+    matches: /(More than 6 months)/i
+});
+
+bot.dialog('Roaming-CallHome', [
+    function (session) {
+        var respCards = new builder.Message(session)
+            .text("Where will you be calling from?")
+            .suggestedActions(
+                builder.SuggestedActions.create(
+                    session,[
+                        builder.CardAction.imBack(session, "From Malaysia", "From Malaysia"),
+                        builder.CardAction.imBack(session, "From Other Countries", "From Other Countries")
+                    ]
+                )
+            );
+		session.send(respCards);	
+	}
+]).triggerAction({
+    matches: /.*(call back home).*|.*(call home country).*/i
+});
+
+bot.dialog('Roaming-CallHome-FromMalaysia', [
+    function (session) {
+		session.send("We have two ways to do that: \n\n\n\n"
+		+ "**1) Direct Dial/Text** \n\n"
+		+ "Dial <00 or +><country code><area code/mobile code><telephone number>\n\n"
+		+ "E.g.: to call Malaysia, (Mobile) 0060161234567 or +60161234567, (Fixed line) 006031234567 or +6031234567\n\n"
+		+ "\n\n"
+
+		+ "**2) Budget ⋆111⋆ Voice Call Dialing**\n\n"
+		+ "Dial ⋆111⋆<country code><area code/mobile code><telephone number><#>.\n\n"
+		+ "E.g.: to call Malaysia, (Mobile) ⋆111⋆60161234567#, (Fixed line) *111*6031234567#)\n\n");
+	}
+]).triggerAction({
+    matches: /.*(call home from Malaysia).*|.*(call from Malaysia).*|(From Malaysia)/i
+});
+
+bot.dialog('Roaming-CallHome-FromOtherCountries', [
+    function (session) {
+		session.send("You can start roaming once your roaming status is active. Just make sure that you're attached to our roaming partners. \n\n\n\n"
+		+ "http://new.digi.com.my/roaming/international-roaming-rates");
+	}
+]).triggerAction({
+    matches: /.*(call home from overseas).*|.*(call from overseas).*|(From Other Countries)/i
+});
+
+bot.dialog('IDD-CallFail', [
+    function (session) {
+		session.send("No worries. Here are some suggestions to try out:\n\n"
+					+ "1. Please check on MyDigi if your IDD is activated \n\n"
+					+ "2. Please ensure that the dialing pattern is accurate  \n\n"
+					+ " Dial <00 or +><country code><area code/mobile code><telephone number>  \n\n"
+					+ "E.g.: to call Malaysia, (Mobile) 0060161234567 or +60161234567, (Fixed line) 006031234567 or +6031234567 < country code>  \n\n\n\n"
+					+ "If that doesn't work, let me connect you to my Human Friend for further assistance. ");
+	}
+]).triggerAction({
+    matches: /.*(cannot call idd).*|.*(cannot call overseas).*|.*(can't call overseas).*/i
+});
+
+bot.dialog('Roaming-RoamLikeHome', [
+    function (session) {
+		session.send("Roam Like Home Monthly is a monthly roaming top up which is bundled with Roaming Voice and Data for your convience. To find more information, please click on this link: \n\n"
+					+ "http://new.digi.com.my/roaming/roam-like-home-monthly");
+	}
+]).triggerAction({
+    matches: /.*(roam like home).*/i
+});
+
 bot.dialog('printenv', [
     function (session) {
 		session.send("here are the settings: ");
@@ -1006,14 +1126,13 @@ bot.dialog('printenv', [
 
 bot.dialog('CatchAll', [
     function (session) {
-
 		
 		if (apiai_error_timeout < Date.now()) {
 			apiai_error_timeout = 0;	// Reset timeout if prevously set to some value
-			var randSessionId = '000000' + math.randomInt(100000,999999);
+//			var randSessionId = '000000' + math.randomInt(100000,999999);
 
 			var request = apiai_app.textRequest(session.message.text, {
-				sessionId: randSessionId
+				sessionId: session.message.address.conversation.id
 			});
 
 			request.on('response', function(response) {
@@ -1021,9 +1140,9 @@ bot.dialog('CatchAll', [
 					session.send("Let's get back to our chat on Digi");
 				} else {		// We have response from API.AI
 					console.log("API.AI [" +response.result.resolvedQuery + '][' + response.result.action + '][' + response.result.score + ']['  + response.result.fulfillment.speech + '][' + response.result.metadata.intentName + ']');
-					//	console.log('API.AI response text:'+ response.result.fulfillment.speech);
-					//	console.log('API.AI response text:'+ response.result.fulfillment.messages[0].speech);
-					//	console.log('API.AI response:'+ JSON.stringify(response.result));
+//						console.log('API.AI response text:'+ response.result.fulfillment.speech);
+//						console.log('API.AI response text:'+ response.result.fulfillment.messages[0].speech);
+						console.log('API.AI response:'+ JSON.stringify(response.result));
 
 					// Flow when API.ai returns
 					// 1) Try to call the intent. 
@@ -1071,4 +1190,8 @@ function listen() {
 module.exports = {
     listen: listen,
 };
+
+
+
+
 
