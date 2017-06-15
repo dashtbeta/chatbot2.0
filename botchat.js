@@ -6267,6 +6267,8 @@
 
 					// Chin Added codes below to add ... typing
                     var element = document.getElementById("wc-message-group-content-id");
+					var dotdotdot = document.getElementById('wc-loading-container-id');
+
                     if(element) { 
 						var newTypingContainer = document.createElement("div");
 						newTypingContainer.id = 'wc-loading-container-id';

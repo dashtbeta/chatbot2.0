@@ -246,8 +246,6 @@ bot.dialog('intro', [
 bot.dialog('byemenu', [
     function (session) {
         session.send("Bye for now.");
-        session.send("Thanks for using Yello");
-        session.send("You can always press \"Main Menu\" button above to start over");
             }
 ]).triggerAction({
     matches: /^(exit)|(quit)|(depart)|(bye)|(goodbye)$/i
@@ -356,16 +354,24 @@ bot.dialog('Plan-AddOn-Topup', [
             .attachmentLayout(builder.AttachmentLayout.carousel)
             .attachments([
                 new builder.HeroCard(session)
-				.title("Step 1 of 3")
-                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Reload-Page2.png') ])
+				.title("Step 1 of 4")
+				.text("At MyDigi app, click on Reload")
+                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Reload-Page1.png') ])
 
-				,new builder.HeroCard(session)
-				.title("Step 2 of 3")
-                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Reload-Page3.png') ])
+                ,new builder.HeroCard(session)
+				.title("Step 2 of 4")
+				.text("Click on online, for reload with Credit Card, Debit Card or Online Banking")
+                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Reload-Page4.png') ])
 				
                 ,new builder.HeroCard(session)
-				.title("Step 3 of 3")
-                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Reload-Page4.png') ])
+				.title("Step 3 of 4")
+				.text("Enter the reload amount, you email address and the press Reload")
+                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Reload-Page567.png') ])
+				
+                ,new builder.HeroCard(session)
+				.title("Step 4 of 4")
+				.text("We will then bring you to payment page. Fill in payment details to complete the reload")
+                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Bill-Payment-Page5.png') ])
 				
             ]);
 		session.send(respCards);		
@@ -378,7 +384,18 @@ bot.dialog('Plan-HappyHour', [
     function (session) {
 		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("If you mean hourly data passes, you can check them out over here. Psst, you might find some exclusive passes on the MyDigi app. Just check them out on the add on page!");
-		session.send("http://new.digi.com.my/prepaid-addons");
+		session.send("");
+		
+        var respCards = new builder.Message(session)
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments([
+                new builder.HeroCard(session)
+				.buttons([
+					builder.CardAction.openUrl(session, 'http://new.digi.com.my/prepaid-addons', 'Prepaid Add-On')
+				])
+					
+            ]);
+		session.send(respCards);		
     }
 ]).triggerAction({
     matches: /.*(happy hour data).*/i
@@ -715,8 +732,18 @@ bot.dialog('Plan-Autobilling', [
 bot.dialog('Plan-AutoReload', [
     function (session) {
 		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
-        session.send("We have a few ways to help you. You can reload online here: (https://store.digi.com.my/storefront/reload-details.ep). Or do it anytime and anywhere on the MyDigi app.");
-    }
+        session.send("We have a few ways to help you. You can reload online");
+        var respCards = new builder.Message(session)
+            .text("Or do it anytime and anywhere on the MyDigi app.")
+            .suggestedActions(
+                builder.SuggestedActions.create(
+                    session,[
+                        builder.CardAction.openUrl(session, "https://store.digi.com.my/storefront/reload-details.ep", "Reload Online")
+                    ]
+                )
+            );
+		session.send(respCards);	
+	}
 ]).triggerAction({
     matches: /.*(auto reload).*|.*(autoreload).*/i
 });	
@@ -880,16 +907,20 @@ bot.dialog('Roaming-Start-MoreThan6Months', [
             .attachmentLayout(builder.AttachmentLayout.carousel)
             .attachments([
 				new builder.HeroCard(session)
-				.title("Step 1")
+                .title('Step 1 of 3')
+                .subtitle('On usage page, select "View Details"')
                 .images([ builder.CardImage.create(session, imagedir + '/images/Roaming-MyDigi-Step1.png') ])
-				
-				,new builder.HeroCard(session)
-				.title("Step 2")
+
+				, new builder.HeroCard(session)
+                .title('Step 2 of 3')
+                .subtitle('Select "Internet" for Internet quota balance')
                 .images([ builder.CardImage.create(session, imagedir + '/images/Roaming-MyDigi-Step2.png') ])
-				
+
 				,new builder.HeroCard(session)
-				.title("Step 3")
+                .title('Step 3 of 3')
+                .subtitle('Select "Voice" for Voice minutes balance')
                 .images([ builder.CardImage.create(session, imagedir + '/images/Roaming-MyDigi-Step3.png') ])
+
             ]);
 		session.send(respCards);
 	}
@@ -922,7 +953,7 @@ bot.dialog('Roaming-CallHome-FromMalaysia', [
 		session.send("We have two ways to do that: \n\n\n\n"
 		+ "**1) Direct Dial/Text** \n\n"
 		+ "Dial <00 or +><country code><area code/mobile code><telephone number>\n\n"
-		+ "E.g.: to call Malaysia, (Mobile) 0060161234567 or +60161234567, (Fixed line) 006031234567 or +6031234567\n\n"
+		+ "E.g.: to call Indonesia, (Mobile) 0060161234567 or +60161234567, (Fixed line) 006031234567 or +6031234567\n\n"
 		+ "\n\n"
 
 		+ "**2) Budget ⋆111⋆ Voice Call Dialing**\n\n"
@@ -1318,8 +1349,8 @@ bot.dialog('Default-Fallback-Intent', [
 		//console.log('API.AI response in dialog:'+ JSON.stringify(args.result));		
 		switch(session.privateConversationData[FallbackState]){
 			case 1:
-				session.send("I don't quite get you." +
-							 "\n\nCan you try saying that in a different way? I might be able to help you better. Because Will can and not Will cannot." );
+				session.send("I don't quite get you. " +
+							 "\n\n Can you try saying that in a different way? I might be able to help you better.");
 				break;
 			case 2:
 				session.send("Hmmm. I don't think I know that. " + 
@@ -1331,9 +1362,7 @@ bot.dialog('Default-Fallback-Intent', [
 				break;
 		}
     }
-]).triggerAction({
-    matches: /(Monthly Billing)/i
-});
+]);
 
 bot.dialog('printenv', [
     function (session) {
