@@ -524,9 +524,7 @@ bot.dialog('Plan-Competitor', [
             ]);
 		session.send(respCards);		
     }
-]).triggerAction({
-    matches: /.*(maxis).*|.*(hotlink).*|.*(umobile).*|.*(u-mobile).*|.*(u mobile).*|.*(celcom).*|.*(xpax).*|.*(unlimited hero).*|.*(postpaid hero).*/i
-});
+]);
 
 bot.dialog('Plan-PortIn', [
     function (session) {
@@ -544,7 +542,7 @@ bot.dialog('Plan-PortIn', [
 				
                 ,new builder.HeroCard(session)
 				.title("Step 2")
-				.text("Upon successful payment, you'll receive and email from us")
+				.text("Upon successful payment, you'll receive an email from us")
 				.buttons([
 					builder.CardAction.openUrl(session, 'http://new.digi.com.my/switch-to-digi', 'Find Out More')	
 				])

@@ -957,7 +957,7 @@
                         className: "wc-header", id: "start-over-menu"       // added id menu
                     }, 
                         o.createElement("img", {className: "wc-header-icon",src: 'https://yellowchat.azurewebsites.net/images/digi-avatar.png',onLoad: e.onImageLoad}),
-                        o.createElement("span", {className: "wc-header-text"}, "Yello"/*n.format.strings.title*/)
+                        o.createElement("span", {className: "wc-header-text"}, n.format.strings.title)
                         ));
                     var i;
                     return "detect" === this.props.resize && (i = o.createElement(d, {
@@ -6267,23 +6267,25 @@
 
 					// Chin Added codes below to add ... typing
                     var element = document.getElementById("wc-message-group-content-id");
-					var dotdotdot = document.getElementById('wc-loading-container-id');
+					var dotdotdot = document.getElementById("wc-loading-container-id");
 
-                    if(element) { 
-						var newTypingContainer = document.createElement("div");
-						newTypingContainer.id = 'wc-loading-container-id';
-						newTypingContainer.className = 'wc-loading-container';
+                    if(element) {
+						if(dotdotdot==undefined || dotdotdot==null) {
+							var newTypingContainer = document.createElement("div");
+							newTypingContainer.id = 'wc-loading-container-id';
+							newTypingContainer.className = 'wc-loading-container';
 
-						var newTyping = document.createElement("div");
-						newTyping.className = 'wc-typing wc-loading-container-typing';
+							var newTyping = document.createElement("div");
+							newTyping.className = 'wc-typing wc-loading-container-typing';
 
-						var newTypingImg = document.createElement("IMG");
-						newTypingImg.setAttribute("src", "http://bot.digi.com.my/images/typingstatus.png");
+							var newTypingImg = document.createElement("IMG");
+							newTypingImg.setAttribute("src", "http://bot.digi.com.my/images/typingstatus.png");
 
-						newTypingContainer.appendChild(newTyping);
-						newTypingContainer.appendChild(newTypingImg);
-					
-                        element.appendChild(newTypingContainer);
+							newTypingContainer.appendChild(newTyping);
+							newTypingContainer.appendChild(newTypingImg);
+
+							element.appendChild(newTypingContainer);
+						}
                     }
 					
                     return r.__assign({}, e, {
@@ -6463,7 +6465,7 @@
         });
         var n = {
             "en-us": {
-                title: "Yello",
+                title: "Digi",
                 send: "Send",
                 unknownFile: "[File of type '%1']",
                 unknownCard: "[Unknown Card '%1']",
@@ -6473,7 +6475,7 @@
                 messageFailed: "couldn't send",
                 messageSending: "sending",
                 timeSent: " at %1",
-                consolePlaceholder: "..."
+                consolePlaceholder: "Type a message..."
             },
             "de-de": {
                 title: "Chat",
