@@ -1333,7 +1333,7 @@ bot.dialog('Roaming-General', [
 							new builder.HeroCard(session)
 							.text(args.result.fulfillment.speech.substring(0,httpLocation-1))
 							.buttons([
-								builder.CardAction.openUrl(session, httpString, 'Rates for '+countryString)
+								builder.CardAction.openUrl(session, httpString, 'Roaming in '+countryString)
 							])
 						]);					
 					session.send(respCards);
