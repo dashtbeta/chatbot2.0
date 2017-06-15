@@ -406,33 +406,6 @@ bot.dialog('Plan-Infinite', [
     matches: /.*(infinite).*|.*(infinity).*/i
 });					
 
-bot.dialog('Plan-Prepaid', [
-    function (session) {
-		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
-        session.send("Let me show you our awesome prepaid plans!");
-        var respCards = new builder.Message(session)
-            .attachmentLayout(builder.AttachmentLayout.carousel)
-            .attachments([
-				new builder.HeroCard(session)
-				.title("Digi Prepaid Live")
-                .images([ builder.CardImage.create(session, imagedir + '/images/prepaid-live.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/prepaid-plans', 'Find Out More')
-				])
-				
-                ,new builder.HeroCard(session)
-				.title("Digi Prepaid Best")
-                .images([ builder.CardImage.create(session, imagedir + '/images/prepaid-best.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/prepaid-plans', 'Find Out More')	
-				])
-            ]);
-		session.send(respCards);		
-    }
-]).triggerAction({
-    matches: /.*(prepaid plan).*|.*(prepaid package).*|.*(plan validity).*|.*(plan valid).*/i
-});
-
 bot.dialog('Plan-Prepaid-Best', [
     function (session) {
 		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
@@ -1018,22 +991,18 @@ bot.dialog('Plan-Recommendation', [
 bot.dialog('Plan-PayAsYouGo', [
     function (session) {
 		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
-		if (session.privateConversationData[PlanRecommendState]) {
-			var respCards = new builder.Message(session)
-				.text("What would you usually use your data for?")
-				.suggestedActions(
-					builder.SuggestedActions.create(
-						session,[
-							builder.CardAction.imBack(session, "Social Media", "Social Media"),
-							builder.CardAction.imBack(session, "Music, Video Streaming", "Music, Video Streaming")
-						]
-					)
-				);
-			builder.Prompts.choice(session, respCards, "Social Media|Music, Video Streaming", { maxRetries:MaxRetries_SingleMenu});
-		} else {
-			session.replaceDialog('CatchAll');
-			return;
-		}
+		session.privateConversationData[PlanRecommendState] = Recommending;
+		var respCards = new builder.Message(session)
+			.text("What would you usually use your data for?")
+			.suggestedActions(
+				builder.SuggestedActions.create(
+					session,[
+						builder.CardAction.imBack(session, "Social Media", "Social Media"),
+						builder.CardAction.imBack(session, "Music, Video Streaming", "Music, Video Streaming")
+					]
+				)
+			);
+		builder.Prompts.choice(session, respCards, "Social Media|Music, Video Streaming", { maxRetries:MaxRetries_SingleMenu});
 	}
 	,function(session, results) {
 		if(results.response==undefined){
@@ -1084,24 +1053,21 @@ bot.dialog('Plan-PayAsYouGo', [
 bot.dialog('Plan-MonthlyBilling', [
     function (session) {
 		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
-		if (session.privateConversationData[PlanRecommendState]) {
-			var respCards = new builder.Message(session)
-				.text("How much data do you use monthly?")
-				.suggestedActions(
-					builder.SuggestedActions.create(
-						session,[
-							builder.CardAction.imBack(session, "More than 25GB", "More than 25GB"),
-							builder.CardAction.imBack(session, "21GB-25GB", "21GB-25GB"),
-							builder.CardAction.imBack(session, "11GB-20GB", "11GB-20GB"),
-							builder.CardAction.imBack(session, "Less than 10GB", "Less than 10GB"),
-							builder.CardAction.imBack(session, "I don't know", "I don't know")
-						]
-					)
-				);
-			builder.Prompts.choice(session, respCards, "More than 25GB|21GB-25GB|11GB-20GB|Less than 10GB|I don't know", { maxRetries:MaxRetries_SingleMenu});
-		} else {
-			session.replaceDialog('CatchAll');
-		}
+		session.privateConversationData[PlanRecommendState] = Recommending;
+		var respCards = new builder.Message(session)
+			.text("How much data do you use monthly?")
+			.suggestedActions(
+				builder.SuggestedActions.create(
+					session,[
+						builder.CardAction.imBack(session, "More than 25GB", "More than 25GB"),
+						builder.CardAction.imBack(session, "21GB-25GB", "21GB-25GB"),
+						builder.CardAction.imBack(session, "11GB-20GB", "11GB-20GB"),
+						builder.CardAction.imBack(session, "Less than 10GB", "Less than 10GB"),
+						builder.CardAction.imBack(session, "I don't know", "I don't know")
+					]
+				)
+			);
+		builder.Prompts.choice(session, respCards, "More than 25GB|21GB-25GB|11GB-20GB|Less than 10GB|I don't know", { maxRetries:MaxRetries_SingleMenu});
 	}
 	,function(session, results) {
 		if(results.response==undefined){
