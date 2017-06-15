@@ -1220,7 +1220,7 @@ bot.dialog('Plan-RecommendPlanByStreaming', [
 				session.send(respCards);
 				break;
 			default:	// Not Much
-				session.replaceDialog('Plan-RecommendPlanByStreaming');
+				session.replaceDialog('Plan-RecommendPlanBySocialMedia');
 				return;
 		}
 		session.replaceDialog('getFeedback');
