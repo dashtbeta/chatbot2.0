@@ -28,14 +28,24 @@ var apiai_error_timeout = 0;
 // Global Variables
 // Session Data
 var LastMenu = 'LastMenu';
-var NumOfFeedback = 'NumOfFeedback';
-var UseCatchAll = 'UseCatchAll';
 var DialogId = 'DialogId';
 var DialogState = 'DialogState';
 var imagedir = 'https://yellowchat.azurewebsites.net';
-var OneTimePin = 'OneTimePin';
-var PhoneNumber = 'PhoneNumber';
-var ValidatedTime = 'ValidatedTime';
+var FallbackState = 'FallbackState';
+// Recommend State 0=Not recommending
+var PlanRecommendState = 'PlanRecommendState';
+var ApiAiSessionId = 'ApiAiSessionId';
+var Recommending = 1;
+var RecommendPrepaidBest = 10;
+var RecommendPrepaidLive = 11;
+var RecommendPostpaidInfinite = 20;
+var RecommendPostpaid110 = 21;
+var RecommendPostpaid80 = 22;
+var RecommendPostpaid50 = 23;
+var RecommendPostpaidInfinite110 = 24;
+var RecommendPostpaidSocialMedia = 30;
+
+
 
 // Bot Retry Parameters
 var MaxRetries = 1;
@@ -220,8 +230,9 @@ bot.use({
 bot.dialog('intro', [
     function (session) {
         // Initialize Session Data
-        session.privateConversationData[NumOfFeedback] = 0;
-        session.privateConversationData[DialogId] = session.message.address.id;
+		session.privateConversationData[PlanRecommendState] = 0;	// are we recommending something?
+		session.privateConversationData[DialogId] = session.message.address.id;
+		session.privateConversationData[FallbackState] = 0;			// how many times user type unknown stuff?
 
         trackBotEvent(session, 'intro', 0);  
         session.send(" Hi, my name is Will, your Virtual Assistant. \n\n How may I help you today?");
@@ -273,55 +284,73 @@ bot.dialog('getBotFeedback', [
     }
 ])
 
-bot.dialog('getInfoFeedback', [
+bot.dialog('getFeedback', [
     function (session) {
-		
 		var respCards = new builder.Message(session)
-			.text("Is this information helpful for you?")
+			.text("Was I able to help you?")
 			.suggestedActions(
 				builder.SuggestedActions.create(
 					session,[
-						builder.CardAction.imBack(session, "Yes", "✓"),
-						builder.CardAction.imBack(session, "No", "✗")
+						builder.CardAction.imBack(session, "Yes", "Yes"),
+						builder.CardAction.imBack(session, "No", "No")
 					]
 				)
 			);
-        builder.Prompts.choice(session, respCards, "Yes|No", { maxRetries:MaxRetries_SingleMenu});
-	},
-    function(session, results) {
-		if(results.response==undefined){
-			session.replaceDialog('menu');			
-		} else {
-			switch (results.response.index) {
-				case 0:
-					trackBotEvent(session,'menu|OtherQuestions|AllAboutMyAccount|GetAccountNo|Yes Useful',1,0);
-					session.send("Thanks for your feedback. I'm glad we can help");
-					session.endDialog();
-					break;
-				case 1:
-					trackBotEvent(session,'menu|OtherQuestions|AllAboutMyAccount|GetAccountNo|Not Useful',1,0);
-					session.send("Thanks for your feedback. We will improve");
-					session.endDialog();
-					break;
-				default:
-					break;
-			}			
-			session.replaceDialog('menu');
+        builder.Prompts.choice(session, respCards, "Yes|No");
+	}
+	,function(session, results) {
+		switch (results.response.index) {
+			case 0:	// Yes
+				session.send("Always good to know :D");
+				break;
+			case 1:	// No
+				var respCards = new builder.Message(session)
+					.text("Would you like to try again?")
+					.suggestedActions(
+						builder.SuggestedActions.create(
+							session,[
+								builder.CardAction.imBack(session, "Yes", "Yes"),
+								builder.CardAction.imBack(session, "No", "No")
+							]
+						)
+					);
+				builder.Prompts.choice(session, respCards, "Yes|No");
+				break;
+			default:
+				break;
 		}
     }
-])
+	,function(session, results) {
+		switch (results.response.index) {
+			case 0:	// Yes
+				if (session.privateConversationData[PlanRecommendState]) {
+					session.replaceDialog('Plan-Recommendation');
+				}
+				break;
+			case 1:	// No
+				session.send("Alright. Can I help you with anything else?");
+				session.endDialog();
+				break;
+			default:
+				break;
+		}			
+    }
+]).triggerAction({
+    matches: /(getFeedback)/i
+});
 
 bot.dialog('Plan-MobileNumOwnership', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("If you have the phone with you, you can check this information on MyDigi app. If not, you can talk to my Human Friend from 9am to 6pm. ");
     }
 ]).triggerAction({
     matches: /.*(this mobile number).*|.*(this number).*|.*(Mobile number ownership for).*/i
 });
 
-
 bot.dialog('Plan-AddOn-Topup', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("You can do this via the MyDigi app or you can dial ⋆200⋆2");
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
@@ -347,201 +376,18 @@ bot.dialog('Plan-AddOn-Topup', [
 
 bot.dialog('Plan-HappyHour', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("If you mean hourly data passes, you can check them out over here. Psst, you might find some exclusive passes on the MyDigi app. Just check them out on the add on page!");
+		session.send("http://new.digi.com.my/prepaid-addons");
     }
 ]).triggerAction({
     matches: /.*(happy hour data).*/i
 });
 
-bot.dialog('Plan-Cheapest-BestValue', [
-    function (session) {
-        session.send("Let me tell you about our unbeatable value plans ;)");
-        var respCards = new builder.Message(session)
-            .attachmentLayout(builder.AttachmentLayout.carousel)
-            .attachments([
-                new builder.HeroCard(session)
-				.title("Digi Postpaid 50")
-                .images([ builder.CardImage.create(session, imagedir + '/images/postpaid-50.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#best-value-plans', 'Find Out More')
-				])
-
-				,new builder.HeroCard(session)
-				.title("Digi Prepaid Live")
-                .images([ builder.CardImage.create(session, imagedir + '/images/prepaid-live.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/prepaid-plans', 'Find Out More')
-				])
-				
-                ,new builder.HeroCard(session)
-				.title("Digi Prepaid Best")
-                .images([ builder.CardImage.create(session, imagedir + '/images/prepaid-best.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/prepaid-plans', 'Find Out More')	
-				])
-            ]);
-		session.send(respCards);		
-    }
-]).triggerAction({
-    matches: /.*(cheapest plan).*|.*(least data).*|.*(cheap plan).*|.*(lowest price).*|.*(lowest plan)/i
-});
-
-bot.dialog('Plan-Latest', [
-    function (session) {
-        session.send("We have a wide varety of plan for all your needs.");
-		session.send(respCards);
-        var respCards = new builder.Message(session)
-            .text("Choose the range that suits you:")
-            .suggestedActions(
-                builder.SuggestedActions.create(
-                    session,[
-                        builder.CardAction.imBack(session, "Below RM60", "Below RM60"),
-                        builder.CardAction.imBack(session, "RM61-RM99", "RM61-RM99"),
-                        builder.CardAction.imBack(session, "Above RM100", "Above RM100")
-                    ]
-                )
-            );
-		session.send(respCards);	
-    }
-]).triggerAction({
-    matches: /.*(latest plan).*|.*(updated plan).*|.*(latest promotion).*|.*(updated plan).*|.*(ambassador).*|.*(current plan).*|.*(best value).*|.*(most data).*|.*(least data).*/i
-});
-
-bot.dialog('Plan-LowTier-Below60', [
-    function (session) {
-        session.send("Here are the prepaid & postpaid plans below RM60");
-        var respCards = new builder.Message(session)
-            .attachmentLayout(builder.AttachmentLayout.carousel)
-            .attachments([
-                new builder.HeroCard(session)
-				.title("Digi Postpaid 50")
-                .images([ builder.CardImage.create(session, imagedir + '/images/postpaid-50.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#best-value-plans', 'Find Out More')
-				])
-
-				,new builder.HeroCard(session)
-				.title("Digi Prepaid Live")
-                .images([ builder.CardImage.create(session, imagedir + '/images/prepaid-live.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/prepaid-plans', 'Find Out More')
-								])
-
-                ,new builder.HeroCard(session)
-				.title("Digi Prepaid Best")
-                .images([ builder.CardImage.create(session, imagedir + '/images/prepaid-best.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/prepaid-plans', 'Find Out More')	
-				])
-            ]);
-		session.send(respCards);		
-    }
-]).triggerAction({
-    matches: /.*(Below RM60).*|.*(Below 60).*/i
-});
-
-bot.dialog('Plan-MidTier-RM61-RM99', [
-    function (session) {
-        session.send("Here are the plans within the range RM61-RM99");
-        var respCards = new builder.Message(session)
-            .attachmentLayout(builder.AttachmentLayout.carousel)
-            .attachments([
-                new builder.HeroCard(session)
-				.title("Digi Postpaid 80")
-                .images([ builder.CardImage.create(session, imagedir + '/images/postpaid-80.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#best-value-plans', 'Find Out More')
-				])
-            ]);
-		session.send(respCards);		
-    }
-]).triggerAction({
-    matches: /.*(RM61-RM99).*/i
-});
-		
-bot.dialog('Plan-HighTier-Over100', [
-    function (session) {
-        session.send("For this range,we have Infinite 150 and Postpaid 110");
-        var respCards = new builder.Message(session)
-            .attachmentLayout(builder.AttachmentLayout.carousel)
-            .attachments([
-                new builder.HeroCard(session)
-				.title("Digi Postpaid 150 Infinite")
-                .images([ builder.CardImage.create(session, imagedir + '/images/postpaid-infinite.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#online-exclusive-plans', 'Find Out More')
-				])
-					
-				,new builder.HeroCard(session)
-				.title("Digi Postpaid 110")
-                .images([ builder.CardImage.create(session, imagedir + '/images/postpaid-110.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#best-value-plans', 'Find Out More')
-				])
-				
-            ]);
-		session.send(respCards);		
-    }
-]).triggerAction({
-    matches: /.*(Above RM100).*|.*(above 100).*|.*(more than 100).*|.*(most expensive).*|.*(expensive plans).*|.*(premium plans).*|.*(most data).*/i
-});
-				
-bot.dialog('Plan-Fastest', [
-    function (session) {
-        session.send("Of course, all of our plans are LTE enabled! These are our current plans");
-        var respCards = new builder.Message(session)
-            .attachmentLayout(builder.AttachmentLayout.carousel)
-            .attachments([
-                new builder.HeroCard(session)
-				.title("Digi Postpaid 150 Infinite")
-                .images([ builder.CardImage.create(session, imagedir + '/images/postpaid-infinite.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#online-exclusive-plans', 'Find Out More')
-				])
-					
-				,new builder.HeroCard(session)
-				.title("Digi Postpaid 110")
-                .images([ builder.CardImage.create(session, imagedir + '/images/postpaid-110.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#best-value-plans', 'Find Out More')
-				])
-
-                ,new builder.HeroCard(session)
-				.title("Digi Postpaid 80")
-                .images([ builder.CardImage.create(session, imagedir + '/images/postpaid-80.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#best-value-plans', 'Find Out More')
-				])
-
-				,new builder.HeroCard(session)
-				.title("Digi Postpaid 50")
-                .images([ builder.CardImage.create(session, imagedir + '/images/postpaid-50.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#best-value-plans', 'Find Out More')
-				])
-
-				,new builder.HeroCard(session)
-				.title("Digi Prepaid Live")
-                .images([ builder.CardImage.create(session, imagedir + '/images/prepaid-live.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/prepaid-plans', 'Find Out More')
-				])
-				
-                ,new builder.HeroCard(session)
-				.title("Digi Prepaid Best")
-                .images([ builder.CardImage.create(session, imagedir + '/images/prepaid-best.jpg') ])
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/prepaid-plans', 'Find Out More')	
-				])
-            ]);
-		session.send(respCards);		
-    }
-]).triggerAction({
-    matches: /.*(fastest plan).*/i
-});
 
 bot.dialog('Plan-Infinite', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("Infinite is first ever exclusive online plans, with no caps on everything from Internet, Calls and Tethering. Check out more details here:");
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
@@ -560,27 +406,9 @@ bot.dialog('Plan-Infinite', [
     matches: /.*(infinite).*|.*(infinity).*/i
 });					
 
-bot.dialog('Plan-PostpaidBudget', [
-    function (session) {
-        session.send("Let me share with you our postpaid value plans. If you're on the website, look out for online exclusives!");
-        var respCards = new builder.Message(session)
-            .attachmentLayout(builder.AttachmentLayout.carousel)
-            .attachments([
-				new builder.HeroCard(session)
-				.title("Digi Best Value Plan")
-				.buttons([
-					builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#online-exclusive-plans', 'Find Out More')
-				])
-            ]);
-		session.send(respCards);		
-	
-    }
-]).triggerAction({
-    matches: /.*(limited budget).*|.*(don't want to pay so much).*/i
-});
-
 bot.dialog('Plan-Prepaid', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("Let me show you our awesome prepaid plans!");
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
@@ -600,14 +428,55 @@ bot.dialog('Plan-Prepaid', [
 				])
             ]);
 		session.send(respCards);		
-	
     }
 ]).triggerAction({
     matches: /.*(prepaid plan).*|.*(prepaid package).*|.*(plan validity).*|.*(plan valid).*/i
 });
+
+bot.dialog('Plan-Prepaid-Best', [
+    function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
+        session.send("Let me show you our awesome prepaid plans!");
+        var respCards = new builder.Message(session)
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments([
+                new builder.HeroCard(session)
+				.title("Digi Prepaid Best")
+                .images([ builder.CardImage.create(session, imagedir + '/images/prepaid-best.jpg') ])
+				.buttons([
+					builder.CardAction.openUrl(session, 'https://new.digi.com.my/prepaid-plans', 'Find Out More')	
+				])
+            ]);
+		session.send(respCards);
+    }
+]).triggerAction({
+    matches: /.*(prepaid best).*/i
+});
+
+bot.dialog('Plan-Prepaid-Live', [
+    function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
+        session.send("Let me show you our awesome prepaid plans!");
+        var respCards = new builder.Message(session)
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments([
+				new builder.HeroCard(session)
+				.title("Digi Prepaid Live")
+                .images([ builder.CardImage.create(session, imagedir + '/images/prepaid-live.jpg') ])
+				.buttons([
+					builder.CardAction.openUrl(session, 'https://new.digi.com.my/prepaid-plans', 'Find Out More')
+				])
+            ]);
+		session.send(respCards);		
+	
+    }
+]).triggerAction({
+    matches: /.*(prepaid live).*/i
+});
 					
 bot.dialog('Plan-WeekendData', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("The new Digi Postpaid plan comes with free lifetime 4G Weekend quota every month – you get extra 4G quota for your usages every Saturday and Sunday.");
     }
 ]).triggerAction({
@@ -616,6 +485,7 @@ bot.dialog('Plan-WeekendData', [
 
 bot.dialog('Plan-Competitor', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("We have unbeatable value plans for all your needs!");
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
@@ -670,6 +540,7 @@ bot.dialog('Plan-Competitor', [
 
 bot.dialog('Plan-PortIn', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("Welcome to the Yellow family! It’s so easy to Switch to Digi, you can do it yourself! Here’s how:");
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
@@ -701,9 +572,10 @@ bot.dialog('Plan-PortIn', [
 ]).triggerAction({
     matches: /.*(change from maxis).*|.*(change from celcom).*|.*(change from xpax).*|.*(change from umobile).*/i
 });			
-		
+
 bot.dialog('Plan-ChangePrepaidToPostpaid', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("If you already have a plan in mind, just click the Change of Plan button, and it'll be a a breeze.  Would you like to take a look at our plans?");
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
@@ -744,6 +616,7 @@ bot.dialog('Plan-ChangePrepaidToPostpaid', [
 
 bot.dialog('Plan-ChangePostpaidToPrepaid', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("If you already have a plan in mind, just click the Change of Plan button, and it'll be a a breeze.  Would you like to take a look at our plans?");
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
@@ -771,6 +644,7 @@ bot.dialog('Plan-ChangePostpaidToPrepaid', [
 
 bot.dialog('Plan-Family', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("If you would like to get a supplementary line, visit us at any of our stores. We'll take care of the rest.");
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
@@ -789,6 +663,7 @@ bot.dialog('Plan-Family', [
 
 bot.dialog('Plan-Buddyz', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("I see you have a question about prepaid. Find out more over here");
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
@@ -817,6 +692,7 @@ bot.dialog('Plan-Buddyz', [
 
 bot.dialog('Plan-Business', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("Thank you for your interest. Please click on the link to leave your details with us. Our Digi Authourized Business Representative will get back to you as soon as possible.");
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
@@ -837,6 +713,7 @@ bot.dialog('Plan-Business', [
 
 bot.dialog('Plan-CancelAutobilling', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("To do that, you can walk in any of our Digi Store, or call in to our Digi Helpline at  016 2211 800 but we strongly recommend that you stay on autobilling.");
     }
 ]).triggerAction({
@@ -845,6 +722,7 @@ bot.dialog('Plan-CancelAutobilling', [
 
 bot.dialog('Plan-Autobilling', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("Have your Digi bill charged to your credit, charge or debit card each month! No hassle at all. Here's the link to find out more:");
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
@@ -863,6 +741,7 @@ bot.dialog('Plan-Autobilling', [
 
 bot.dialog('Plan-AutoReload', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("We have a few ways to help you. You can reload online here: (https://store.digi.com.my/storefront/reload-details.ep). Or do it anytime and anywhere on the MyDigi app.");
     }
 ]).triggerAction({
@@ -871,6 +750,7 @@ bot.dialog('Plan-AutoReload', [
 
 bot.dialog('Plan-Broadband', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("Great choice! Our broadband will provide you with unlimited entertainment");
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
@@ -906,6 +786,7 @@ bot.dialog('Plan-Broadband', [
 
 bot.dialog('Plan-Broadband2', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("I have 3 broadband plans for you\n\n " +
 					 "* **Broadband 30** comes with a total of 18GB data, suitable for light use\n\n" + 
 					 "* **Broadband 60** comes with a total of 40GB data, suitable for medium use\n\n" + 
@@ -929,6 +810,7 @@ bot.dialog('Plan-Broadband2', [
 
 bot.dialog('Plan-Broadband-30', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
             .attachments([
@@ -947,6 +829,7 @@ bot.dialog('Plan-Broadband-30', [
 
 bot.dialog('Plan-Broadband-60', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
             .attachments([
@@ -966,6 +849,7 @@ bot.dialog('Plan-Broadband-60', [
 
 bot.dialog('Plan-Broadband-100', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
             .attachments([
@@ -985,6 +869,7 @@ bot.dialog('Plan-Broadband-100', [
 
 bot.dialog('Roaming-Start', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("You can start roaming once your roaming status is active. Just make sure that you're attached to our roaming partners.");
         var respCards = new builder.Message(session)
             .text("How long have you been with Digi")
@@ -1004,6 +889,7 @@ bot.dialog('Roaming-Start', [
 
 bot.dialog('Roaming-Start-LessThan6Months', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("You can walk into any Digi Store and my Human Friends will help you with that. Please bring along :\n\n"
 		+ "1) NRIC \n\n"
 		+ "2) Valid Passport \n\n"
@@ -1015,6 +901,7 @@ bot.dialog('Roaming-Start-LessThan6Months', [
 
 bot.dialog('Roaming-Start-MoreThan6Months', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         session.send("You can turn on roaming via the MyDigi app. Just follow the steps below");
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
@@ -1039,13 +926,14 @@ bot.dialog('Roaming-Start-MoreThan6Months', [
 
 bot.dialog('Roaming-CallHome', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
         var respCards = new builder.Message(session)
             .text("Where will you be calling from?")
             .suggestedActions(
                 builder.SuggestedActions.create(
                     session,[
-                        builder.CardAction.imBack(session, "From Malaysia", "From Malaysia"),
-                        builder.CardAction.imBack(session, "From Other Countries", "From Other Countries")
+                        builder.CardAction.imBack(session, "Malaysia", "Malaysia"),
+                        builder.CardAction.imBack(session, "Other Countries", "Other Countries")
                     ]
                 )
             );
@@ -1057,6 +945,7 @@ bot.dialog('Roaming-CallHome', [
 
 bot.dialog('Roaming-CallHome-FromMalaysia', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
 		session.send("We have two ways to do that: \n\n\n\n"
 		+ "**1) Direct Dial/Text** \n\n"
 		+ "Dial <00 or +><country code><area code/mobile code><telephone number>\n\n"
@@ -1073,6 +962,7 @@ bot.dialog('Roaming-CallHome-FromMalaysia', [
 
 bot.dialog('Roaming-CallHome-FromOtherCountries', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
 		session.send("You can start roaming once your roaming status is active. Just make sure that you're attached to our roaming partners. \n\n\n\n"
 		+ "http://new.digi.com.my/roaming/international-roaming-rates");
 	}
@@ -1082,6 +972,7 @@ bot.dialog('Roaming-CallHome-FromOtherCountries', [
 
 bot.dialog('IDD-CallFail', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
 		session.send("No worries. Here are some suggestions to try out:\n\n"
 					+ "1. Please check on MyDigi if your IDD is activated \n\n"
 					+ "2. Please ensure that the dialing pattern is accurate  \n\n"
@@ -1095,11 +986,387 @@ bot.dialog('IDD-CallFail', [
 
 bot.dialog('Roaming-RoamLikeHome', [
     function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
 		session.send("Roam Like Home Monthly is a monthly roaming top up which is bundled with Roaming Voice and Data for your convience. To find more information, please click on this link: \n\n"
 					+ "http://new.digi.com.my/roaming/roam-like-home-monthly");
 	}
 ]).triggerAction({
     matches: /.*(roam like home).*/i
+});
+
+// Digi Plan Recommendation
+bot.dialog('Plan-Recommendation', [
+    function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
+        session.privateConversationData[PlanRecommendState] = Recommending;
+        var respCards = new builder.Message(session)
+            .text("What type of plan would you prefer?")
+            .suggestedActions(
+                builder.SuggestedActions.create(
+                    session,[
+                        builder.CardAction.imBack(session, "Pay as you go", "Pay as you go"),
+                        builder.CardAction.imBack(session, "Monthly Billing", "Monthly Billing")
+                    ]
+                )
+            );
+		session.send(respCards);
+	}
+]).triggerAction({
+    matches: /.*(recommend plan).*|.*(recommend me plan).*/i
+});
+
+bot.dialog('Plan-PayAsYouGo', [
+    function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
+		if (session.privateConversationData[PlanRecommendState]) {
+			var respCards = new builder.Message(session)
+				.text("What would you usually use your data for?")
+				.suggestedActions(
+					builder.SuggestedActions.create(
+						session,[
+							builder.CardAction.imBack(session, "Social Media", "Social Media"),
+							builder.CardAction.imBack(session, "Music, Video Streaming", "Music, Video Streaming")
+						]
+					)
+				);
+			builder.Prompts.choice(session, respCards, "Social Media|Music, Video Streaming", { maxRetries:MaxRetries_SingleMenu});
+		} else {
+			session.replaceDialog('CatchAll');
+			return;
+		}
+	}
+	,function(session, results) {
+		if(results.response==undefined){
+			session.endDialog();
+			session.replaceDialog('CatchAll');
+		} else {
+			switch (results.response.index) {
+				case 0:		// Social Media
+					session.privateConversationData[PlanRecommendState] = RecommendPrepaidBest;
+					session.send("I think this will be a good plan for you. You can also upgrade your plan at any time. Just let us know.");
+					var respCards = new builder.Message(session)
+						.attachmentLayout(builder.AttachmentLayout.carousel)
+						.attachments([
+							new builder.HeroCard(session)
+							.title("Prepaid Best")
+							.images([ builder.CardImage.create(session, imagedir + '/images/Prepaid-Best.jpg') ])
+							.buttons([
+								builder.CardAction.openUrl(session, 'http://new.digi.com.my/prepaid-plans', 'Find Out More')
+							])
+						]);
+					session.send(respCards);
+					break;
+				case 1:		// Music, Video Streaming
+					session.privateConversationData[PlanRecommendState] = RecommendPrepaidLive;
+					session.send("I think this will be a good plan for you. You can also upgrade your plan at any time. Just let us know.");
+					var respCards = new builder.Message(session)
+						.attachmentLayout(builder.AttachmentLayout.carousel)
+						.attachments([
+							new builder.HeroCard(session)
+							.title("Prepaid Live")
+							.images([ builder.CardImage.create(session, imagedir + '/images/Prepaid-Live.jpg') ])
+							.buttons([
+								builder.CardAction.openUrl(session, 'http://new.digi.com.my/prepaid-plans', 'Find Out More')
+							])
+						]);
+					session.send(respCards);
+					break;
+				default:
+					return;
+			}
+		}
+		session.replaceDialog('getFeedback');
+    }
+]).triggerAction({
+    matches: /(Pay as you go)/i
+});
+
+bot.dialog('Plan-MonthlyBilling', [
+    function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
+		if (session.privateConversationData[PlanRecommendState]) {
+			var respCards = new builder.Message(session)
+				.text("How much data do you use monthly?")
+				.suggestedActions(
+					builder.SuggestedActions.create(
+						session,[
+							builder.CardAction.imBack(session, "More than 25GB", "More than 25GB"),
+							builder.CardAction.imBack(session, "21GB-25GB", "21GB-25GB"),
+							builder.CardAction.imBack(session, "11GB-20GB", "11GB-20GB"),
+							builder.CardAction.imBack(session, "Less than 10GB", "Less than 10GB"),
+							builder.CardAction.imBack(session, "I don't know", "I don't know")
+						]
+					)
+				);
+			builder.Prompts.choice(session, respCards, "More than 25GB|21GB-25GB|11GB-20GB|Less than 10GB|I don't know", { maxRetries:MaxRetries_SingleMenu});
+		} else {
+			session.replaceDialog('CatchAll');
+		}
+	}
+	,function(session, results) {
+		if(results.response==undefined){
+			session.replaceDialog('CatchAll');
+			session.endDialog();
+		} else {
+			switch (results.response.index) {
+				case 0:		// More than 25GB
+					session.privateConversationData[PlanRecommendState] = RecommendPostpaidInfinite;
+					session.send("I think this will be a good plan for you. You can also upgrade your plan at any time. Just let us know.");
+					var respCards = new builder.Message(session)
+						.attachmentLayout(builder.AttachmentLayout.carousel)
+						.attachments([
+							new builder.HeroCard(session)
+							.title("Digi Postpaid Infinite")
+							.images([ builder.CardImage.create(session, imagedir + '/images/Postpaid-Infinite.jpg') ])
+							.buttons([
+								builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#online-exclusive-plans', 'Find Out More')
+							])
+						]);
+					session.send(respCards);
+					break;
+				case 1:		// 21-25GB
+					session.privateConversationData[PlanRecommendState] = RecommendPostpaid110;
+					session.send("I think this will be a good plan for you. You can also upgrade your plan at any time. Just let us know.");
+					var respCards = new builder.Message(session)
+						.attachmentLayout(builder.AttachmentLayout.carousel)
+						.attachments([
+							new builder.HeroCard(session)
+							.title("Digi Postpaid 110")
+							.images([ builder.CardImage.create(session, imagedir + '/images/Postpaid-110.jpg') ])
+							.buttons([
+								builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#best-value-plans', 'Find Out More')
+							])
+						]);
+					session.send(respCards);
+					break;
+				case 2:		// 11-20GB
+					session.privateConversationData[PlanRecommendState] = RecommendPostpaid80;
+					session.send("I think this will be a good plan for you. You can also upgrade your plan at any time. Just let us know.");
+					var respCards = new builder.Message(session)
+						.attachmentLayout(builder.AttachmentLayout.carousel)
+						.attachments([
+							new builder.HeroCard(session)
+							.title("Digi Postpaid 80")
+							.images([ builder.CardImage.create(session, imagedir + '/images/Postpaid-80.jpg') ])
+							.buttons([
+								builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#best-value-plans', 'Find Out More')
+							])
+						]);
+					session.send(respCards);
+					break;
+				case 3:		// less than 10 GB
+					session.privateConversationData[PlanRecommendState] = RecommendPostpaid50;
+					session.send("I think this will be a good plan for you. You can also upgrade your plan at any time. Just let us know.");
+					var respCards = new builder.Message(session)
+						.attachmentLayout(builder.AttachmentLayout.carousel)
+						.attachments([
+							new builder.HeroCard(session)
+							.title("Digi Postpaid 50")
+							.images([ builder.CardImage.create(session, imagedir + '/images/Postpaid-50.jpg') ])
+							.buttons([
+								builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#best-value-plans', 'Find Out More')
+							])
+						]);
+					session.send(respCards);
+					break;
+				default:	// I don't know
+					session.replaceDialog('Plan-RecommendPlanByStreaming');
+					return;
+			}
+		}
+		session.replaceDialog('getFeedback');
+    }
+]).triggerAction({
+    matches: /(Monthly Billing)/i
+});
+	
+bot.dialog('Plan-RecommendPlanByStreaming', [
+    function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
+		var respCards = new builder.Message(session)
+			.text("How often do you use streaming services like YouTube and Spotify?")
+			.suggestedActions(
+				builder.SuggestedActions.create(
+					session,[
+						builder.CardAction.imBack(session, "Very often", "Very often"),
+						builder.CardAction.imBack(session, "Not much", "Not much")
+					]
+				)
+			);
+		builder.Prompts.choice(session, respCards, "Very often|Not much", { maxRetries:MaxRetries_SingleMenu});
+	}
+	,function(session, results) {
+		switch (results.response.index) {
+			case 0:		// Very Often
+				session.privateConversationData[PlanRecommendState] = RecommendPostpaidInfinite110;
+				session.send("I think this will be a good plan for you. You can also upgrade your plan at any time. Just let us know.");
+				var respCards = new builder.Message(session)
+					.attachmentLayout(builder.AttachmentLayout.carousel)
+					.attachments([
+						new builder.HeroCard(session)
+						.title("Digi Postpaid Infinite")
+						.images([ builder.CardImage.create(session, imagedir + '/images/Postpaid-Infinite.jpg') ])
+						.buttons([
+							builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#online-exclusive-plans', 'Find Out More')
+						])
+
+						,new builder.HeroCard(session)
+						.title("Digi Postpaid 110")
+						.images([ builder.CardImage.create(session, imagedir + '/images/Postpaid-110.jpg') ])					
+						.buttons([
+							builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#best-value-plans', 'Find Out More')
+						])
+					]);
+				session.send(respCards);
+				break;
+			default:	// Not Much
+				session.replaceDialog('Plan-RecommendPlanByStreaming');
+				return;
+		}
+		session.replaceDialog('getFeedback');
+    }
+]);
+	
+bot.dialog('Plan-RecommendPlanBySocialMedia', [
+    function (session) {
+		session.privateConversationData[FallbackState] = 0;	// to reset the Fallback State (people talking rubbish)
+		var respCards = new builder.Message(session)
+			.text("Do you use social media (e.g. Facebook, Twitter) often?")
+			.suggestedActions(
+				builder.SuggestedActions.create(
+					session,[
+						builder.CardAction.imBack(session, "Very often", "Very often"),
+						builder.CardAction.imBack(session, "Not much", "Not much")
+					]
+				)
+			);
+		builder.Prompts.choice(session, respCards, "Very often|Not much", { maxRetries:MaxRetries_SingleMenu});
+	}
+	,function(session, results) {
+		if(results.response==undefined){
+			session.replaceDialog('CatchAll');
+			session.endDialog();
+		} else {
+			switch (results.response.index) {
+				case 0:		// Very Often
+				session.privateConversationData[PlanRecommendState] = RecommendPostpaid80;
+					session.send("I think this will be a good plan for you. You can also upgrade your plan at any time. Just let us know.");
+					var respCards = new builder.Message(session)
+						.attachmentLayout(builder.AttachmentLayout.carousel)
+						.attachments([
+							new builder.HeroCard(session)
+							.title("Digi Postpaid 80")
+							.images([ builder.CardImage.create(session, imagedir + '/images/Postpaid-80.jpg') ])
+							.buttons([
+								builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#best-value-plans', 'Find Out More')
+							])
+						]);
+					session.send(respCards);
+					break;
+				default:	// Not Much
+					session.privateConversationData[PlanRecommendState] = RecommendPostpaidInfinite50;
+					session.send("I think this will be a good plan for you. You can also upgrade your plan at any time. Just let us know.");
+					var respCards = new builder.Message(session)
+						.attachmentLayout(builder.AttachmentLayout.carousel)
+						.attachments([
+							new builder.HeroCard(session)
+							.title("Digi Postpaid 50")
+							.images([ builder.CardImage.create(session, imagedir + '/images/Postpaid-50.jpg') ])
+							.buttons([
+								builder.CardAction.openUrl(session, 'https://new.digi.com.my/postpaid-plans#best-value-plans', 'Find Out More')
+							])
+						]);
+					session.send(respCards);
+					break;
+			}
+		}
+		session.replaceDialog('getFeedback');
+    }
+]);
+
+bot.dialog('Roaming-General', [
+    function (session, args) {
+		
+		if(args.result.actionIncomplete==true){
+			
+			// If user answer unknown items many times, just change to new session ID
+			if(session.privateConversationData[FallbackState] >2){
+				session.privateConversationData[FallbackState] = 0;
+				var currentApiAiSesionId = session.privateConversationData[ApiAiSessionId];
+				session.privateConversationData[ApiAiSessionId] = currentApiAiSesionId.substring(0, 13) + math.randomInt(1000,9999);
+			}
+
+			// now display the responses
+			if(args.result.fulfillment.speech.length>0) {
+				if(args.result.fulfillment.speech.search("postpaid")>=0) {
+					session.privateConversationData[FallbackState] = 0;// reset to 0
+					var respCards = new builder.Message(session)
+						.text(args.result.fulfillment.speech)
+						.suggestedActions(
+							builder.SuggestedActions.create(
+								session,[
+									builder.CardAction.imBack(session, "Postpaid", "Postpaid"),
+									builder.CardAction.imBack(session, "Prepaid", "Prepaid"),
+								]
+							)
+						);
+					session.send(respCards);
+				} else {
+					session.send(args.result.fulfillment.speech);
+				}
+			}
+		} else {
+			// our flow is complete
+			session.privateConversationData[FallbackState] = 0;			
+			
+			// display the result
+			if(args.result.fulfillment.speech.length>0) {
+				var httpLocation = args.result.fulfillment.speech.search("http");
+				var httpString = args.result.fulfillment.speech.substring(httpLocation,args.result.fulfillment.speech.length);
+				var countryLocation = args.result.fulfillment.speech.search("country=");
+				var countryString = args.result.fulfillment.speech.substring(countryLocation+8,args.result.fulfillment.speech.length);
+
+				if(httpLocation>=0) {
+					var respCards = new builder.Message(session)
+						.attachmentLayout(builder.AttachmentLayout.carousel)
+						.attachments([
+							new builder.HeroCard(session)
+							.text(args.result.fulfillment.speech.substring(0,httpLocation-1))
+							.buttons([
+								builder.CardAction.openUrl(session, httpString, 'Rates for '+countryString)
+							])
+						]);					
+					session.send(respCards);
+				} else {
+					session.send(args.result.fulfillment.speech);
+				}				
+			}
+		}
+    }
+]).triggerAction({
+    matches: /(Monthly Billing)/i
+});
+
+bot.dialog('Default-Fallback-Intent', [
+    function (session, args) {
+		//console.log('API.AI response in dialog:'+ JSON.stringify(args.result));		
+		switch(session.privateConversationData[FallbackState]){
+			case 1:
+				session.send("I don't quite get you." +
+							 "\n\nCan you try saying that in a different way? I might be able to help you better. Because Will can and not Will cannot." );
+				break;
+			case 2:
+				session.send("Hmmm. I don't think I know that. " + 
+				"\n\nCan you try saying it in a different way? ");
+				break;
+			default:
+				session.send("I don't understand that. Would you like to talk one of my Human Friends?");
+				session.privateConversationData[FallbackState] = 0;
+				break;
+		}
+    }
+]).triggerAction({
+    matches: /(Monthly Billing)/i
 });
 
 bot.dialog('printenv', [
@@ -1125,13 +1392,21 @@ bot.dialog('printenv', [
 
 bot.dialog('CatchAll', [
     function (session) {
+		// Reset any conversation state
+		session.privateConversationData[PlanRecommendState] = 0;
 		
 		if (apiai_error_timeout < Date.now()) {
 			apiai_error_timeout = 0;	// Reset timeout if prevously set to some value
-//			var randSessionId = '000000' + math.randomInt(100000,999999);
-
+			
+			// we don't have any session ID yet. Set initial Session ID
+			if((session.privateConversationData[ApiAiSessionId]==undefined) || 
+			   (session.privateConversationData[ApiAiSessionId]==null)) {
+				session.privateConversationData[ApiAiSessionId] = session.message.address.id;
+			}
+			
+			// send the request to API.ai
 			var request = apiai_app.textRequest(session.message.text, {
-				sessionId: session.message.address.conversation.id
+				sessionId: session.privateConversationData[ApiAiSessionId]
 			});
 
 			request.on('response', function(response) {
@@ -1144,15 +1419,66 @@ bot.dialog('CatchAll', [
 						console.log('API.AI response:'+ JSON.stringify(response.result));
 
 					// Flow when API.ai returns
-					// 1) Try to call the intent. 
+					// 1) Try to call the intent & pass the JSON to the intent 
 					// 2) If intent not exist, check if there is fulfillment speech and display that default speech
 					// 3) If fulfillment speech does not exist, display default "Let's get back to our chat on Digi" 
-					try {
-						session.replaceDialog(response.result.metadata.intentName);
+					try {						
+						switch (response.result.metadata.intentName) {
+							case 'Default-Fallback-Intent':
+							case 'Roaming-General':
+								session.privateConversationData[FallbackState]++;
+								break;
+							default:
+								session.privateConversationData[FallbackState] = 0;
+								break;
+						}
+						session.replaceDialog(response.result.metadata.intentName, response);
+						
 					} catch (e) {
 						console.log("Fallback due to Unknown API.ai Intent [" + response.result.metadata.intentName + ']');
 						if(response.result.fulfillment.speech.length>0) {
-							session.send(response.result.fulfillment.speech);				
+							session.send(response.result.fulfillment.speech);
+							
+							var jsonobject = response.result.fulfillment.messages.filter(value=>value.type===2)[0];
+							if(jsonobject) {
+								if(jsonobject.replies.length == 1){
+									var respCards = new builder.Message(session)
+										.text(jsonobject.title)
+										.suggestedActions(
+											builder.SuggestedActions.create(
+												session,[
+													builder.CardAction.imBack(session, jsonobject.replies[0], jsonobject.replies[0])
+												]
+											)
+										);
+									session.send(respCards);
+								} else if(jsonobject.replies.length == 2){
+									var respCards = new builder.Message(session)
+										.text(jsonobject.title)
+										.suggestedActions(
+											builder.SuggestedActions.create(
+												session,[
+													builder.CardAction.imBack(session, jsonobject.replies[0], jsonobject.replies[0]),
+													builder.CardAction.imBack(session, jsonobject.replies[1], jsonobject.replies[1])
+												]
+											)
+										);
+									session.send(respCards);
+								} else if(jsonobject.replies.length > 2){
+									var respCards = new builder.Message(session)
+										.text(jsonobject.title)
+										.suggestedActions(
+											builder.SuggestedActions.create(
+												session,[
+													builder.CardAction.imBack(session, jsonobject.replies[0], jsonobject.replies[0]),
+													builder.CardAction.imBack(session, jsonobject.replies[1], jsonobject.replies[1]),
+													builder.CardAction.imBack(session, jsonobject.replies[2], jsonobject.replies[2])
+												]
+											)
+										);
+									session.send(respCards);
+								}
+							}
 						} else {
 							session.send("Let's get back to our chat on Digi");
 						}

@@ -216,17 +216,16 @@ body .wc-app, .wc-app button, .wc-app input, .wc-app textarea {
     .wc-suggested-actions .wc-hscroll > ul > li {
       display: inline-block;
       margin: 2px;
-      max-width: 40%; }
+      /*max-width: 40%;*/ }
       .wc-suggested-actions .wc-hscroll > ul > li button {
         background-color: #fff;
         color: #3a96dd;
         min-height: 32px;
         overflow: inherit;
-        padding: 0 10px;
         text-overflow: ellipsis;
         white-space: nowrap;
 		border-radius: 10px;
-        width: 100%; }
+        /*width: 100%; */}
       .wc-suggested-actions .wc-hscroll > ul > li button:hover {
         background-color: #3a96dd;
         border-color: #3a96dd;
