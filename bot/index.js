@@ -1264,7 +1264,7 @@ bot.dialog('Plan-RecommendPlanBySocialMedia', [
 					session.send(respCards);
 					break;
 				default:	// Not Much
-					session.privateConversationData[PlanRecommendState] = RecommendPostpaidInfinite50;
+					session.privateConversationData[PlanRecommendState] = RecommendPostpaid50;
 					session.send("I think this will be a good plan for you. You can also upgrade your plan at any time. Just let us know.");
 					var respCards = new builder.Message(session)
 						.attachmentLayout(builder.AttachmentLayout.carousel)
