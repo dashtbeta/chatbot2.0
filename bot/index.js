@@ -34,7 +34,6 @@ var imagedir = 'https://yellowchat.azurewebsites.net';
 var FallbackState = 'FallbackState';
 // Recommend State 0=Not recommending
 var PlanRecommendState = 'PlanRecommendState';
-var ApiAiSessionId = 'ApiAiSessionId';
 var Recommending = 1;
 var RecommendPrepaidBest = 10;
 var RecommendPrepaidLive = 11;
@@ -44,8 +43,6 @@ var RecommendPostpaid80 = 22;
 var RecommendPostpaid50 = 23;
 var RecommendPostpaidInfinite110 = 24;
 var RecommendPostpaidSocialMedia = 30;
-
-
 
 // Bot Retry Parameters
 var MaxRetries = 1;
@@ -1284,11 +1281,15 @@ bot.dialog('Roaming-General', [
 		
 		if(args.result.actionIncomplete==true){
 			
-			// If user answer unknown items many times, just change to new session ID
+			// If user answer unknown items many times, just cancel the current request to API.ai
 			if(session.privateConversationData[FallbackState] >2){
-				session.privateConversationData[FallbackState] = 0;
-				var currentApiAiSesionId = session.privateConversationData[ApiAiSessionId];
-				session.privateConversationData[ApiAiSessionId] = currentApiAiSesionId.substring(0, 13) + math.randomInt(1000,9999);
+				var request = apiai_app.textRequest("Cancel", {
+					sessionId: session.message.address.conversation.id
+				});
+				request.end();
+				session.privateConversationData[FallbackState] = 1;
+				session.replaceDialog('Default-Fallback-Intent');
+				return;
 			}
 
 			// now display the responses
@@ -1316,11 +1317,17 @@ bot.dialog('Roaming-General', [
 			
 			// display the result
 			if(args.result.fulfillment.speech.length>0) {
+				// parse the string for country name, and display the result as "Roaming in Taiwan" 
 				var httpLocation = args.result.fulfillment.speech.search("http");
 				var httpString = args.result.fulfillment.speech.substring(httpLocation,args.result.fulfillment.speech.length);
 				var countryLocation = args.result.fulfillment.speech.search("country=");
 				var countryString = args.result.fulfillment.speech.substring(countryLocation+8,args.result.fulfillment.speech.length);
 
+				// replace camelcase with Caps... e.g. SouthKorea --> South Korea
+				var countryString2 = countryString
+					// insert a space before all caps
+					.replace(/([a-z])([A-Z])/g, '$1 $2');
+				
 				if(httpLocation>=0) {
 					var respCards = new builder.Message(session)
 						.attachmentLayout(builder.AttachmentLayout.carousel)
@@ -1328,7 +1335,7 @@ bot.dialog('Roaming-General', [
 							new builder.HeroCard(session)
 							.text(args.result.fulfillment.speech.substring(0,httpLocation-1))
 							.buttons([
-								builder.CardAction.openUrl(session, httpString, 'Roaming in '+countryString)
+								builder.CardAction.openUrl(session, httpString, 'Roaming in '+countryString2)
 							])
 						]);					
 					session.send(respCards);
@@ -1346,6 +1353,7 @@ bot.dialog('Default-Fallback-Intent', [
     function (session, args) {
 		//console.log('API.AI response in dialog:'+ JSON.stringify(args.result));		
 		switch(session.privateConversationData[FallbackState]){
+			case 0:
 			case 1:
 				session.send("I don't quite get you. " +
 							 "\n\n Can you try saying that in a different way? I might be able to help you better.");
@@ -1390,25 +1398,19 @@ bot.dialog('CatchAll', [
 		
 		if (apiai_error_timeout < Date.now()) {
 			apiai_error_timeout = 0;	// Reset timeout if prevously set to some value
-			
-			// we don't have any session ID yet. Set initial Session ID
-			if((session.privateConversationData[ApiAiSessionId]==undefined) || 
-			   (session.privateConversationData[ApiAiSessionId]==null)) {
-				session.privateConversationData[ApiAiSessionId] = session.message.address.id;
-			}
-			
+						
 			// send the request to API.ai
 			var request = apiai_app.textRequest(session.message.text, {
-				sessionId: session.privateConversationData[ApiAiSessionId]
+				sessionId: session.message.address.conversation.id
 			});
+			request.end();
 
 			request.on('response', function(response) {
 				if(response.result.action==undefined){
 					session.send("Let's get back to our chat on Digi");
 				} else {		// We have response from API.AI
 					console.log("API.AI [" +response.result.resolvedQuery + '][' + response.result.action + '][' + response.result.score + ']['  + response.result.fulfillment.speech + '][' + response.result.metadata.intentName + ']');
-//						console.log('API.AI response text:'+ response.result.fulfillment.speech);
-//						console.log('API.AI response text:'+ response.result.fulfillment.messages[0].speech);
+						//console.log('API.AI response text:'+ response.result.fulfillment.speech);
 						console.log('API.AI response:'+ JSON.stringify(response.result));
 
 					// Flow when API.ai returns
@@ -1426,13 +1428,15 @@ bot.dialog('CatchAll', [
 								break;
 						}
 						session.replaceDialog(response.result.metadata.intentName, response);
-						
+						return;
 					} catch (e) {
 						console.log("Fallback due to Unknown API.ai Intent [" + response.result.metadata.intentName + ']');
 						if(response.result.fulfillment.speech.length>0) {
 							session.send(response.result.fulfillment.speech);
-							
-							var jsonobject = response.result.fulfillment.messages.filter(value=>value.type===2)[0];
+
+							// Check out Quick Replies for Facebook
+							var jsonobject = response.result.fulfillment.messages.filter(value=> {return value.type==2 &&
+																							value.platform=='facebook'})[0];
 							if(jsonobject) {
 								if(jsonobject.replies.length == 1){
 									var respCards = new builder.Message(session)
@@ -1484,7 +1488,6 @@ bot.dialog('CatchAll', [
 				session.send("Let's get back to our chat on Digi");
 			});
 
-			request.end();
 		} else {
 			// there were error in the last 1 day. Do not query API AI for the next 1 day
 			session.send("Let's get back to our chat on Digi");

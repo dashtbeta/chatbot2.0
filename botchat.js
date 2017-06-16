@@ -6052,7 +6052,7 @@
                 }, t.prototype.onClickSend = function () {
                     this.textInput.focus(), this.sendMessage()
                 }, t.prototype.onClickHome = function () {  //  Yan Keat: added code here to trigger Main Menu
-                    this.props.sendMessage("Main Menu")
+                    this.props.sendMessage("Tips")
                 }, t.prototype.onChangeFile = function () {
                     this.textInput.focus(), this.props.sendFiles(this.fileInput.files), this.fileInput.value = null
                 }, t.prototype.render = function () {
@@ -6060,19 +6060,20 @@
                         t = "wc-console";
                     
 					// main menu at top of chat window
-//                    var element = document.getElementById("wc-suggested-actions-id");	// main menu at suggestion action bar
-//                    var header_menu_element = document.getElementById("wc-header-menu-id");
-//                    if(element && header_menu_element==null) { 
-//						var newTH = document.createElement('button');
-//						newTH.id = 'wc-header-menu-id';
-//						newTH.className = 'wc-header-menu';
-//						newTH.innerHTML = 'Main Menu';
-//						newTH.onclick = function () {
-//							return e.onClickHome()
-//						};
-//					// Create Main Menu Button
-//                        element.appendChild(newTH);
-//                    }
+                    //var element = document.getElementById("wc-suggested-actions-id");	// main menu at suggestion action bar
+                    var element = document.getElementById("start-over-menu");	// main menu at top of window
+                    var header_menu_element = document.getElementById("wc-header-menu-id");
+                    if(element && header_menu_element==null) { 
+						var newTH = document.createElement('button');
+						newTH.id = 'wc-header-menu-id';
+						newTH.className = 'wc-header-menu';
+						newTH.innerHTML = 'Tips';
+						newTH.onclick = function () {
+							return e.onClickHome()
+						};
+					// Create Main Menu Button
+                        element.appendChild(newTH);
+                    }
 
 					// Create Popup Window					
                     return this.props.inputText.length > 0 && (t += " has-text"), o.createElement("div", {

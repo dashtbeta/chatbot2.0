@@ -10,9 +10,7 @@ body .wc-app, .wc-app button, .wc-app input, .wc-app textarea {
   color: #0073de;
   cursor: pointer;
   outline: none;
-  transition: color .3s ease, background-color .3s ease; 
-  line-height: normal;
-}
+  transition: color .3s ease, background-color .3s ease; }
 
 .wc-app h1, .wc-app h2, .wc-app h3, .wc-app h4, .wc-app p, .wc-app ul, .wc-app ol {
   margin: 0;
@@ -39,10 +37,6 @@ body .wc-app, .wc-app button, .wc-app input, .wc-app textarea {
   right: 0;
   top: 0;
   z-index: 1; }
-
-.wc-header img {
-	width: inherit;
-}
 
 .wc-header-icon{
 
@@ -162,9 +156,6 @@ body .wc-app, .wc-app button, .wc-app input, .wc-app textarea {
 
 .wc-loading-container {
   position: relative;
-}
-.wc-loading-container img {
-  width: inherit;
 }
 .wc-loading-container-typing {
   display: block;
@@ -313,10 +304,6 @@ body .wc-app, .wc-app button, .wc-app input, .wc-app textarea {
   position: relative;
   /*transition: max-height 2s ease-in-out;*/ }
 
-.wc-message-wrapper img {
-  width: inherit;
-}
-
 @keyframes animationFrames {
   0% {
     /*max-height: 0;*/
@@ -344,10 +331,7 @@ body .wc-app, .wc-app button, .wc-app input, .wc-app textarea {
   border-radius: 10px;        /* Chin modified 28 Apr 2017 */
   box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.2);
   padding: 8px;
-  word-break: break-word; 
-  font-weight: normal;
-  line-height: normal;
-}
+  word-break: break-word; }
 
 .wc-message-content.clickable {
   cursor: pointer; }
@@ -580,7 +564,6 @@ body .wc-app, .wc-app button, .wc-app input, .wc-app textarea {
 .wc-message-from-bot .wc-message-content {
   background-color: #eceff1;
   color: #000; 
-  line-height: normal;
   /*width: 90%; */}    /* added by Chin 5 May 2017 */
 
 .wc-message-from-bot svg.wc-message-callout path {
