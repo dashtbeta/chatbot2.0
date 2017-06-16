@@ -1417,7 +1417,7 @@ bot.dialog('Chat-Complain', [
     function (session) {
 		session.send("I'm a little stumpe here. Maybe you can consider talking to my Human Friends. You can reach the through any of the methods below:\n\n" 
 					 + "* Talk to us on Twitter : https://twitter.com/mydigi \n\n"
-					 + "* Call us at the Digi Helpline: 016-2211-800");	
+					 + "* Call us at the Digi Helpline: \n\n 016-2211-800");	
 	}
 ]);
 
