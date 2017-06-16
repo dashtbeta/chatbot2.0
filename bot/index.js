@@ -351,25 +351,20 @@ bot.dialog('Plan-AddOn-Topup', [
             .attachmentLayout(builder.AttachmentLayout.carousel)
             .attachments([
                 new builder.HeroCard(session)
-				.title("Step 1 of 4")
-				.text("At MyDigi app, click on Reload")
-                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Reload-Page1.png') ])
+				.title("Step 1 of 3")
+				.text("At MyDigi app, click on Add-on and choose Add-on Category")
+                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Addon-Internet1.png') ])
 
                 ,new builder.HeroCard(session)
-				.title("Step 2 of 4")
-				.text("Click on online, for reload with Credit Card, Debit Card or Online Banking")
-                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Reload-Page4.png') ])
+				.title("Step 2 of 3")
+				.text("Select your package you want")
+                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Addon-Internet2.png') ])
 				
                 ,new builder.HeroCard(session)
-				.title("Step 3 of 4")
-				.text("Enter the reload amount, you email address and the press Reload")
-                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Reload-Page567.png') ])
-				
-                ,new builder.HeroCard(session)
-				.title("Step 4 of 4")
-				.text("We will then bring you to payment page. Fill in payment details to complete the reload")
-                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Bill-Payment-Page5.png') ])
-				
+				.title("Step 3 of 3")
+				.text("Click Buy Internet")
+                .images([ builder.CardImage.create(session, imagedir + '/images/MyDigi-Addon-Internet34.png') ])
+								
             ]);
 		session.send(respCards);		
     }
@@ -948,7 +943,7 @@ bot.dialog('Roaming-CallHome-FromMalaysia', [
 		session.send("We have two ways to do that: \n\n\n\n"
 		+ "**1) Direct Dial/Text** \n\n"
 		+ "Dial <00 or +><country code><area code/mobile code><telephone number>\n\n"
-		+ "E.g.: to call Indonesia, (Mobile) 0060161234567 or +60161234567, (Fixed line) 006031234567 or +6031234567\n\n"
+		+ "E.g.: to call Indonesia, (Mobile) 0060161234567 or +60161234567\n\n"
 		+ "\n\n"
 
 		+ "**2) Budget ⋆111⋆ Voice Call Dialing**\n\n"
@@ -1288,7 +1283,19 @@ bot.dialog('Roaming-General', [
 				});
 				request.end();
 				session.privateConversationData[FallbackState] = 1;
-				session.replaceDialog('Default-Fallback-Intent');
+				
+				//session.replaceDialog('Default-Fallback-Intent');
+				session.send("I'm sorry I don't understand. Maybe you want to check the roaming rates using our website");
+				var respCards = new builder.Message(session)
+					.attachmentLayout(builder.AttachmentLayout.carousel)
+					.attachments([
+						new builder.HeroCard(session)
+						.text("List of Roaming Countries")
+						.buttons([
+							builder.CardAction.openUrl(session, "http://new.digi.com.my/roaming/international-roaming-rates", 'Check  Rates')
+						])
+					]);					
+				session.send(respCards);
 				return;
 			}
 
@@ -1349,11 +1356,17 @@ bot.dialog('Roaming-General', [
     matches: /(Monthly Billing)/i
 });
 
+// Redirect all to fallback intent
+bot.dialog('Default-Unknown', [
+    function (session, args) {
+		session.replaceDialog('Default-Fallback-Intent',args);
+	}
+]);
+
 bot.dialog('Default-Fallback-Intent', [
     function (session, args) {
 		//console.log('API.AI response in dialog:'+ JSON.stringify(args.result));		
 		switch(session.privateConversationData[FallbackState]){
-			case 0:
 			case 1:
 				session.send("I don't quite get you. " +
 							 "\n\n Can you try saying that in a different way? I might be able to help you better.");
@@ -1362,12 +1375,50 @@ bot.dialog('Default-Fallback-Intent', [
 				session.send("Hmmm. I don't think I know that. " + 
 				"\n\nCan you try saying it in a different way? ");
 				break;
+			case 3:
+			case 4:
+			case 5:
+				session.privateConversationData[FallbackState] = 0;				
+				var respCards = new builder.Message(session)
+					.text("I don't understand that. Would you like to talk one of my Human Friends?")
+					.suggestedActions(
+						builder.SuggestedActions.create(
+							session,[
+								builder.CardAction.imBack(session, "Yes", "Yes"),
+								builder.CardAction.imBack(session, "No", "Yes")
+							]
+						)
+					);
+				builder.Prompts.choice(session, respCards, "Yes|No", { maxRetries:MaxRetries_SingleMenu});				
+				break;
 			default:
-				session.send("I don't understand that. Would you like to talk one of my Human Friends?");
+				session.send("I don't quite get you. " +
+							 "\n\n Can you try saying that in a different way? I might be able to help you better.");
 				session.privateConversationData[FallbackState] = 0;
 				break;
 		}
     }
+	,function(session, results) {
+		switch (results.response.index) {
+			case 0:	// Yes
+				session.replaceDialog('Chat-Complain');
+				break;
+			case 1:	// No
+				session.send("Alright. Can I help you with anything else?");
+				break;
+			default:
+				break;
+		}			
+		session.endDialog();
+    }
+]);
+
+bot.dialog('Chat-Complain', [
+    function (session) {
+		session.send("I'm a little stumpe here. Maybe you can consider talking to my Human Friends. You can reach the through any of the methods below:\n\n" 
+					 + "* Talk to us on Twitter : https://twitter.com/mydigi \n\n"
+					 + "* Call us at the Digi Helpline: 016-2211-800");	
+	}
 ]);
 
 bot.dialog('printenv', [
@@ -1419,6 +1470,7 @@ bot.dialog('CatchAll', [
 					// 3) If fulfillment speech does not exist, display default "Let's get back to our chat on Digi" 
 					try {						
 						switch (response.result.metadata.intentName) {
+							case 'Default-Unknown':
 							case 'Default-Fallback-Intent':
 							case 'Roaming-General':
 								session.privateConversationData[FallbackState]++;
