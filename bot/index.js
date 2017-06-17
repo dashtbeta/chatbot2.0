@@ -167,14 +167,13 @@ function trackBotEvent(session, description, dialog_state, storeLastMenu) {
         session.privateConversationData[DialogId] = session.message.address.id;
     }
 
-	logConversation(session,
-					session.message.address.conversation.id, 
+	logConversation(session.message.address.conversation.id, 
 					session.privateConversationData[DialogId],
-					dialog_state,
+					dialog_state,"","",
 					session.privateConversationData[LastMenu]);	
 }
 
-function logConversation(session, conversationId, dialogId, dialogState, chatLog) {
+function logConversation(conversationId, dialogId, dialogState, dialogType, dialogInput, chatLog) {
     var options = {
         method: 'POST',
         url: process.env.CHATBOT_LOG_URL,
@@ -187,8 +186,8 @@ function logConversation(session, conversationId, dialogId, dialogState, chatLog
 "chat_id": "'  + conversationId+ '",\
 "dialog_id": "'+ dialogId+ '",\
 "dialog_state":"' + dialogState + '",\
-"dialog_type":"",\
-"dialog_input":"",\
+"dialog_type":"' + dialogType + '",\
+"dialog_input":"' + dialogInput + '",\
 "chat_log": "'+chatLog+'"}'
         }
     };
@@ -213,13 +212,40 @@ bot.dialog('YouThere', [(session)=>{
 bot.use({
     receive: function (event, next) {
 		// todo: log with session info
-        console.log('Log:User Typed[' + event.text + '] user[' + event.address.user.name + ']');
+		if(event.text.length>0) {
+			//console.log('Log:User [' + event.address.conversation.id + '] Typed[' + event.text + ']');
+			logConversation(event.address.conversation.id, 0/*Dialog ID*/,0/*Dialog State*/,
+							"Text In"/*Dialog Type*/, ""/*Dialog Input*/,event.text);
+		}
         next();
     },
     send: function (event, next) {
 		// todo: log with session info
-        console.log('Log:Bot Replied' + event.text + ', user: ' + event.address.user.name);
-        next();
+		//console.log('Log:Bot [' + event.address.conversation.id +  '] Replied[' + JSON.stringify(event) + ']');
+		if(event.text!=undefined) {
+			//console.log('Log:Bot [' + event.address.conversation.id +  '] Replied[' + event.text + ']');
+			logConversation(event.address.conversation.id, 0/*Dialog ID*/,0/*Dialog State*/,
+							"Text Out"/*Dialog Type*/, ""/*Dialog Input*/,event.text);			
+		} else {
+			// no text, see if we have attachment
+			try {
+				var textString = "";
+				if (event.attachments[0].content.text!=undefined) {
+					textString += event.attachments[0].content.text;
+				}
+				if (event.attachments[0].content.title!=undefined) {
+					textString += event.attachments[0].content.title;
+				}
+				//console.log('Log:Bot [' + event.address.conversation.id +  '] Replied[' + event.attachments[0].content.buttons[0].title + '][' + textString + ']');
+				logConversation(event.address.conversation.id, 0/*Dialog ID*/,0/*Dialog State*/,
+								"Text Out"/*Dialog Type*/, event.attachments[0].content.buttons[0].title/*Dialog Input*/,textString);
+			} catch (e) {
+				//console.log('Log:Bot [' + event.address.conversation.id +  '] Replied[' + event.text + ']');
+				logConversation(event.address.conversation.id, 0/*Dialog ID*/,0/*Dialog State*/,
+								"Text Out"/*Dialog Type*/, ""/*Dialog Input*/,event.text);
+			}
+		}
+		next();
     }
 });
 
@@ -231,7 +257,6 @@ bot.dialog('intro', [
 		session.privateConversationData[DialogId] = session.message.address.id;
 		session.privateConversationData[FallbackState] = 0;			// how many times user type unknown stuff?
 
-        trackBotEvent(session, 'intro', 0);  
         session.send(" Hi, my name is Will, your Virtual Assistant. \n\n How may I help you today?");
     },
     function (session, results) {
@@ -1461,8 +1486,11 @@ bot.dialog('CatchAll', [
 					session.send("Let's get back to our chat on Digi");
 				} else {		// We have response from API.AI
 					console.log("API.AI [" +response.result.resolvedQuery + '][' + response.result.action + '][' + response.result.score + ']['  + response.result.fulfillment.speech + '][' + response.result.metadata.intentName + ']');
+					
+					logConversation(session.message.address.conversation.id, 0/*Dialog ID*/,0/*Dialog State*/,
+									"Intent"/*Dialog Type*/, ""/*Dialog Input*/,response.result.metadata.intentName);					
 						//console.log('API.AI response text:'+ response.result.fulfillment.speech);
-						console.log('API.AI response:'+ JSON.stringify(response.result));
+						//console.log('API.AI response:'+ JSON.stringify(response.result));
 
 					// Flow when API.ai returns
 					// 1) Try to call the intent & pass the JSON to the intent 
