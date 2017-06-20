@@ -2021,7 +2021,7 @@ bot.dialog('printenv', [
 });
 
 function ProcessApiAiResponse(session, response) {
-	console.log('API.AI response:'+ JSON.stringify(response));
+//	console.log('API.AI response:'+ JSON.stringify(response));
 	try {
 		var jsonobject = response.result.fulfillment.messages.filter(value=> {return value.platform=='facebook'});
 		if(jsonobject.length>0) {
@@ -2031,9 +2031,7 @@ function ProcessApiAiResponse(session, response) {
 			if(jsonFbText.length>0) {
 				for(idx=0; idx<jsonFbText.length; idx++){
 					if(jsonFbText[idx].speech.length >0) {
-						var tempString = jsonFbText[idx].speech;
-						tempString.replace(/[\r\n]+/g, "\n\n");
-						session.send(tempString);
+						session.send(jsonFbText[idx].speech);
 					}
 				}								
 			}
@@ -2127,13 +2125,28 @@ function ProcessApiAiResponse(session, response) {
 				}
 				session.send(respCards);
 			}
+			
+			// We have FB Images
+			var jsonFbImage = response.result.fulfillment.messages.filter(value=> {return value.type==3 && value.platform=='facebook'});
+			if(jsonFbImage.length>0) {
+				var CardAttachments = [];
+				for(idx=0; idx<jsonFbImage.length; idx++){
+					CardAttachments.push(
+						new builder.HeroCard(session)
+						.images([ builder.CardImage.create(session, jsonFbImage[idx].imageUrl) ])
+					);									
+				}
+				var respCards = new builder.Message(session)
+					.attachmentLayout(builder.AttachmentLayout.carousel)
+					.attachments(CardAttachments);
+				session.send(respCards);
+			}
 		} else {
 			// No Facebook Message. we only have normal message. output only normal string
 			// Print out each individual Messages
 			var jsonObjectMsg = response.result.fulfillment.messages.filter(value=> {return value.type==0 && value.platform==null});
 			if(jsonObjectMsg) {
 				for(idx=0; idx<jsonObjectMsg.length; idx++) {
-console.log('API.AI response:'+ jsonObjectMsg[idx].speech);
 					if(jsonObjectMsg[idx].speech.length >0) {
 						session.send(jsonObjectMsg[idx].speech);
 					}
