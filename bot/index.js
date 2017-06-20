@@ -208,6 +208,25 @@ bot.dialog('YouThere', [(session)=>{
     },3000)
 }])
 
+function ComplainChannels(session) {
+	var now = new Date();
+
+	if(now.getHours()>=10 && now.getHours()<=21) {//Between 10am-9pm, show livechat button
+		session.send("* Talk to us on Twitter : \n\n https://twitter.com/mydigi \n\n"
+					 + "* Call us at the Digi Helpline: \n\n 016-2211-800"
+					 + "* Chat with us at Digi Live Chat.");
+		var respCards = new builder.HeroCard(session)
+		.buttons([
+			builder.CardAction.openUrl(session, 'new.digi.com.my/webchat', 'Live Chat')
+		]);
+		session.send(respCards);
+	} else {
+		session.send("* Talk to us on Twitter : \n\n https://twitter.com/mydigi \n\n"
+					 + "* Call us at the Digi Helpline: \n\n 016-2211-800");
+	}
+}
+
+
 // Middleware for logging all sent & received messages
 bot.use({
     receive: function (event, next) {
@@ -1441,7 +1460,7 @@ bot.dialog('Default-Fallback-Intent', [
 	,function(session, results) {
 		switch (results.response.index) {
 			case 0:	// Yes
-				session.replaceDialog('Chat-Complain');
+				ComplainChannels(session);
 				break;
 			case 1:	// No
 				session.send("Alright. Can I help you with anything else?");
@@ -1464,27 +1483,6 @@ bot.dialog('Start-Over', [
 ]).triggerAction({
     matches: /.*(Start Over).*/i
 });
-
-bot.dialog('Chat-Complain', [
-    function (session) {
-		var now = new Date();
-		
-		if(now.getHours()>=10 && now.getHours()<=21) {//Between 10am-9pm, show livechat button
-			session.send("* Talk to us on Twitter : \n\n https://twitter.com/mydigi \n\n"
-						 + "* Call us at the Digi Helpline: \n\n 016-2211-800"
-						 + "* Chat with us at Digi Live Chat.");
-			var respCards = new builder.HeroCard(session)
-			.buttons([
-				builder.CardAction.openUrl(session, 'new.digi.com.my/webchat', 'Live Chat')
-			]);
-			session.send(respCards);
-		} else {
-			session.send("* Talk to us on Twitter : \n\n https://twitter.com/mydigi \n\n"
-						 + "* Call us at the Digi Helpline: \n\n 016-2211-800");
-		}
-	}
-]);
-
 
 // FAQ
 bot.dialog('FAQ-Account', [
@@ -2007,8 +2005,6 @@ bot.dialog('printenv', [
     function (session) {
 		session.send("here are the settings: ");
 		session.send(" ♥ APP_SECRET:" + process.env.APP_SECRET +
-					" \n\n SBP_SMS_AUTHORIZATIONKEY :" + process.env.SBP_SMS_AUTHORIZATIONKEY +
-					" \n\n SBP_SMS_SENDURL :" + process.env.SBP_SMS_SENDURL +
 					" \n\n APIGW_URL:" + process.env.APIGW_URL +
 					" \n\n APIGW_SMS_AUTH_CLIENT_ID:" + process.env.APIGW_SMS_AUTH_CLIENT_ID +
 					" \n\n APIGW_SMS_AUTH_CLIENT_SECRET:" + process.env.APIGW_SMS_AUTH_CLIENT_SECRET +
@@ -2023,6 +2019,173 @@ bot.dialog('printenv', [
 ]).triggerAction({
     matches: /^(printEnv)$/
 });
+
+function ProcessApiAiResponse(session, response) {
+	console.log('API.AI response:'+ JSON.stringify(response));
+	try {
+		var jsonobject = response.result.fulfillment.messages.filter(value=> {return value.platform=='facebook'});
+		if(jsonobject.length>0) {
+
+			// We have FB Text
+			var jsonFbText = response.result.fulfillment.messages.filter(value=> {return value.type==0 && value.platform=='facebook'});
+			if(jsonFbText.length>0) {
+				for(idx=0; idx<jsonFbText.length; idx++){
+					if(jsonFbText[idx].speech.length >0) {
+						var tempString = jsonFbText[idx].speech;
+						tempString.replace(/[\r\n]+/g, "\n\n");
+						session.send(tempString);
+					}
+				}								
+			}
+
+			// We have FB Card. Put all cards into carousel
+			var jsonFbCard = response.result.fulfillment.messages.filter(value=> {return value.type==1 && value.platform=='facebook'});
+			if(jsonFbCard.length>0) {
+				var CardAttachments = [];
+				for(idx=0; idx<jsonFbCard.length; idx++){
+					var CardButtons = [];
+					if(jsonFbCard[idx].buttons) {
+						for (idxButton=0; idxButton<jsonFbCard[idx].buttons.length; idxButton++) {
+							// Check if quick reply is it HTTP or normal string
+							wwwLocation = jsonFbCard[idx].buttons[idxButton].postback.search("www");
+							if(wwwLocation>=0){
+								httpLocation = jsonFbCard[idx].buttons[idxButton].postback.search("http");
+								if(httpLocation>=0) {
+									// URL includes http://
+									CardButtons.push(
+										builder.CardAction.openUrl(session, jsonFbCard[idx].buttons[idxButton].postback, jsonFbCard[idx].buttons[idxButton].text));
+								} else {
+									// URL DOES NOT includes http://
+									CardButtons.push(
+										builder.CardAction.openUrl(session, "http://"+jsonFbCard[idx].buttons[idxButton].postback, jsonFbCard[idx].buttons[idxButton].text));
+								}
+							} else {
+								// Button is normal imBack
+								CardButtons.push(
+									builder.CardAction.imBack(session, jsonFbCard[idx].buttons[idxButton].postback, jsonFbCard[idx].buttons[idxButton].text));
+							}
+						}
+					}
+					CardAttachments.push(
+						new builder.HeroCard(session)
+						.title(jsonFbCard[idx].title)
+						.text(jsonFbCard[idx].subtitle)
+						.images([ builder.CardImage.create(session, jsonFbCard[idx].imageUrl) ])
+						.buttons(CardButtons)
+					);									
+				}
+				var respCards = new builder.Message(session)
+					.attachmentLayout(builder.AttachmentLayout.carousel)
+					.attachments(CardAttachments);
+				session.send(respCards);
+			}
+
+			// we have Facebook Quick Reply. Put as quickreply							
+			var jsonFbQuickReply = response.result.fulfillment.messages.filter(value=> {return value.type==2 && value.platform=='facebook'});
+			if(jsonFbQuickReply.length>0) {
+				var QuickReplyButtons = [];
+				for(idx=0; idx<jsonFbQuickReply.length; idx++){
+					var QuickReplyTitleUsedAsUrl = 0;
+					for (idxQuickReply=0; idxQuickReply<jsonFbQuickReply[idx].replies.length; idxQuickReply++) {
+						// Check if quick reply is it HTTP or normal string
+						wwwLocation = jsonFbQuickReply[idx].replies[idxQuickReply].search("www");
+						if(wwwLocation>=0){
+							QuickReplyTitleUsedAsUrl = 1;
+							httpLocation = jsonFbQuickReply[idx].replies[idxQuickReply].search("http");
+							if(httpLocation>=0) {
+								// URL includes http://
+								QuickReplyButtons.push(
+									builder.CardAction.openUrl(session, jsonFbQuickReply[idx].replies[idxQuickReply], jsonFbQuickReply[idx].title));
+							} else {
+								// URL DOES NOT includes http://
+								QuickReplyButtons.push(
+									builder.CardAction.openUrl(session, "http://"+jsonFbQuickReply[idx].replies[idxQuickReply], jsonFbQuickReply[idx].title));
+							}
+						} else {
+							QuickReplyButtons.push(
+								builder.CardAction.imBack(session, jsonFbQuickReply[idx].replies[idxQuickReply], jsonFbQuickReply[idx].replies[idxQuickReply]));
+						}
+					}
+				}
+				var respCards;
+				if(QuickReplyTitleUsedAsUrl) {
+					respCards = new builder.Message(session)
+						.text(jsonFbQuickReply[0].title)
+						.suggestedActions(
+							builder.SuggestedActions.create(
+								session,QuickReplyButtons
+							)
+						);
+				} else {
+					respCards = new builder.Message(session)
+						.text(jsonFbQuickReply[idx].title)
+						.suggestedActions(
+							builder.SuggestedActions.create(
+								session,QuickReplyButtons
+							)
+						);
+				}
+				session.send(respCards);
+			}
+		} else {
+			// No Facebook Message. we only have normal message. output only normal string
+			// Print out each individual Messages
+			var jsonObjectMsg = response.result.fulfillment.messages.filter(value=> {return value.type==0 && value.platform==null});
+			if(jsonObjectMsg) {
+				for(idx=0; idx<jsonObjectMsg.length; idx++) {
+console.log('API.AI response:'+ jsonObjectMsg[idx].speech);
+					if(jsonObjectMsg[idx].speech.length >0) {
+						session.send(jsonObjectMsg[idx].speech);
+					}
+				}
+			}
+		}
+	} catch (e) {
+		console.log("ProcessApiAiResponse Error: [" + JSON.stringify(response.result) + ']');
+	}	
+}
+
+function ProcessApiAiAndAddButton(session, response) {
+	try {
+		// Print out each individual Messages
+		var jsonObjectMsg = response.result.fulfillment.messages.filter(value=> {return value.type==0 && value.platform==null});
+		if(jsonObjectMsg) {
+			for(idx=0; idx<(jsonObjectMsg.length-1); idx++) {
+				if(jsonObjectMsg[idx].speech.length >0) {
+					var tempString = jsonObjectMsg[idx].speech;
+					tempString.replace(/[\r\n]+/g, "\n\n");
+					session.send(tempString);
+				}
+			}
+			// Last Message, add in button, either Download MyDigi / Go to Store
+			if(jsonObjectMsg[jsonObjectMsg.length-1].speech.search("MyDigi")>=0) {
+				var respCards = new builder.Message(session)
+					.text(jsonObjectMsg[jsonObjectMsg.length-1].speech)
+					.suggestedActions(
+						builder.SuggestedActions.create(
+							session,[
+								builder.CardAction.openUrl(session, 'http://appurl.io/j1801ncp', 'Download MyDigi'),
+							]
+						)
+					);
+				session.send(respCards);				
+			} else {
+				var respCards = new builder.Message(session)
+					.text(jsonObjectMsg[jsonObjectMsg.length-1].speech)
+					.suggestedActions(
+						builder.SuggestedActions.create(
+							session,[
+								builder.CardAction.openUrl(session, 'http://new.digi.com.my/support/digi-store', 'Find a store'),
+							]
+						)
+					);
+				session.send(respCards);				
+			}
+		}
+	} catch (e) {
+		console.log("ProcessApiAiAndAddButton Error: [" + JSON.stringify(response.result) + ']');
+	}	
+}
 
 bot.dialog('CatchAll', [
     function (session) {
@@ -2042,7 +2205,7 @@ bot.dialog('CatchAll', [
 				if(response.result.action==undefined){
 					session.send("Let's get back to our chat on Digi");
 				} else {		// We have response from API.AI
-					console.log("API.AI [" +response.result.resolvedQuery + '][' + response.result.action + '][' + response.result.score + ']['  + response.result.fulfillment.speech + '][' + response.result.metadata.intentName + ']');
+//					console.log("API.AI [" +response.result.resolvedQuery + '][' + response.result.action + '][' + response.result.score + ']['  + response.result.fulfillment.speech + '][' + response.result.metadata.intentName + ']');
 
 					logConversation(session.message.address.conversation.id, 0/*Dialog ID*/,0/*Dialog State*/,
 									"Intent"/*Dialog Type*/, ""/*Dialog Input*/,response.result.metadata.intentName);					
@@ -2054,79 +2217,89 @@ bot.dialog('CatchAll', [
 					// 2) If intent not exist, check if there is fulfillment speech and display that default speech
 					// 3) If fulfillment speech does not exist, display default "Let's get back to our chat on Digi" 
 					try {
-						console.log("CatchAll: Fallback due to Unknown API.ai Intent [" + response.result.metadata.intentName);
+						console.log("CatchAll: API.ai Intent [" + response.result.metadata.intentName +"]");
 						switch (response.result.metadata.intentName) {
 							case 'Default-Unknown':
 							case 'Default-Fallback-Intent':
 							case 'Roaming-General':
 								session.privateConversationData[FallbackState]++;
+								session.replaceDialog(response.result.metadata.intentName, response);
 								break;
+							case 'Chat-smile':
+							case 'Chat-Compliment':
+							case 'Chat-Thanks':
+								session.privateConversationData[FallbackState] = 0;
+								ProcessApiAiAndAddButton(session,response);
+								break;
+							case 'Chat-Complain':
+							case 'Chat-Helpline':
+								session.privateConversationData[FallbackState] = 0;
+								ProcessApiAiResponse(session,response);
+								ComplainChannels(session);
+								break;
+							//case 'Broadband-QuotaDeduction':
+							case 'Broadband-StreamFree':
+							case 'Broadband-StreamOnDemand':
+							case 'Broadband-VoIPCall':
+							case 'Chat-Greetings':
+							case 'Chat-help':	// Help on using chatbot
+							case 'Chat-Ok':
+							case 'Chat-Rude':
+							case 'Default Welcome Intent':
+							case 'Default-Fallback-Intent':
+							case 'Default-Unknown':
+							case 'FAQ-1300-1800-Numbers':
+							case 'FAQ-Account':
+							case 'FAQ-Account-Change':
+							case 'FAQ-Add-FnF':
+							case 'FAQ-Bill-Payment':  
+							case 'FAQ-Buddyz-Charge':
+							case 'FAQ-Change-Billing-Cycle':
+							case 'FAQ-Connect-ID':
+							case 'FAQ-How-FnF':
+							case 'FAQ-Minimum-Topup':
+							case 'FAQ-Mydigi':
+							case 'FAQ-MyDigi-Download-Bill':
+							case 'FAQ-MyDigi-Pay-For-Other':
+							case 'FAQ-PUK-Code':
+							case 'FAQ-Talk-Time-Transfer':
+							case 'Find-A-Store':
+							//case 'IDD-CallFail':
+							case 'Plan-Cheapest-BestValue':
+							case 'Plan-Fastest':
+							case 'Plan-HighTier-Over100':
+							case 'Plan-MinimumReload':
+							case 'Plan-MonthlyBilling':
+							case 'Plan-PayAsYouGo':
+							case 'Plan-Prepaid-Expire':
+							//case 'Plan-Recommendation':
+							case 'Plan-RecommendPlanBySocialMedia':
+							case 'Plan-RecommendPlanByStreaming':
+							case 'Plan-SpecialNumber':
+							case 'Roaming-ActivateForOthers':
+							case 'Roaming-ActivateWhileAbroad':
+							case 'Roaming-CallFromOverseas':
+							//case 'Roaming-CallHome':
+							case 'Roaming-General':
+							case 'Roaming-IncreaseCreditLimit':
+							//case 'Roaming-RoamLikeHome':
+							case 'Roaming-SharingData':
+							//case 'Roaming-Start':
+							case 'Roaming-Status':
+							case 'Tips':
+								session.privateConversationData[FallbackState] = 0;
+								ProcessApiAiResponse(session, response);
+								break;							
 							default:
 								session.privateConversationData[FallbackState] = 0;
+								session.replaceDialog(response.result.metadata.intentName, response);
 								break;
 						}
-						session.replaceDialog(response.result.metadata.intentName, response);
 						return;
 					} catch (e) {
 						console.log("CatchAll: API.ai Intent [" + response.result.metadata.intentName + ']');
-						if(response.result.fulfillment.speech.length>0) {
-
-							// Print out each individual Messages
-							var jsonObjectMsg = response.result.fulfillment.messages.filter(value=> {return value.type==0});
-							if(jsonObjectMsg) {
-								for(idx=0; idx<jsonObjectMsg.length; idx++) {
-									if(jsonObjectMsg[idx].speech.length >0) {
-										var tempString = jsonObjectMsg[idx].speech;
-										tempString.replace(/[\r\n]+/g, "\n\n");
-										session.send(tempString);
-									}
-								}
-							}
-							
-							// Check out Quick Replies for Facebook
-							var jsonobject = response.result.fulfillment.messages.filter(value=> {return value.type==2 && value.platform=='facebook'})[0];
-							if(jsonobject) {
-								if(jsonobject.replies.length == 1){
-									var respCards = new builder.Message(session)
-										.text(jsonobject.title)
-										.suggestedActions(
-											builder.SuggestedActions.create(
-												session,[
-													builder.CardAction.imBack(session, jsonobject.replies[0], jsonobject.replies[0])
-												]
-											)
-										);
-									session.send(respCards);
-								} else if(jsonobject.replies.length == 2){
-									var respCards = new builder.Message(session)
-										.text(jsonobject.title)
-										.suggestedActions(
-											builder.SuggestedActions.create(
-												session,[
-													builder.CardAction.imBack(session, jsonobject.replies[0], jsonobject.replies[0]),
-													builder.CardAction.imBack(session, jsonobject.replies[1], jsonobject.replies[1])
-												]
-											)
-										);
-									session.send(respCards);
-								} else if(jsonobject.replies.length > 2){
-									var respCards = new builder.Message(session)
-										.text(jsonobject.title)
-										.suggestedActions(
-											builder.SuggestedActions.create(
-												session,[
-													builder.CardAction.imBack(session, jsonobject.replies[0], jsonobject.replies[0]),
-													builder.CardAction.imBack(session, jsonobject.replies[1], jsonobject.replies[1]),
-													builder.CardAction.imBack(session, jsonobject.replies[2], jsonobject.replies[2])
-												]
-											)
-										);
-									session.send(respCards);
-								}
-							}
-						} else {
-							session.send("Let's get back to our chat on Digi");
-						}
+						//console.log("CatchAll: object [" + JSON.stringify(response.result) + ']');
+						ProcessApiAiResponse(session, response);
 					}
 				}
 			});
