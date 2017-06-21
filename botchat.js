@@ -956,7 +956,7 @@
                     n.format.options.showHeader && (r = o.createElement("div", {
                         className: "wc-header", id: "start-over-menu"       // added id menu
                     }, 
-                        o.createElement("img", {className: "wc-header-icon",src: 'https://yellowchat.azurewebsites.net/images/digi-avatar.png',onLoad: e.onImageLoad}),
+                        o.createElement("img", {className: "wc-header-icon",src: botAvatar,onLoad: e.onImageLoad}),
                         o.createElement("span", {className: "wc-header-text"}, n.format.strings.title)
                         ));
                     var i;
@@ -5809,14 +5809,14 @@
                     }, o.createElement("div", {
                         className: "wc-message-group-content",
 						id: "wc-message-group-content-id"
-                    }, o.createElement("img", { className: "wc-intro-logo",src: 'http://bot.digi.com.my/images/start-logo.PNG',ref: function (t) {
+                    }, o.createElement("img", { className: "wc-intro-logo",src: botImage,ref: function (t) {
                             return e.scrollContent = t; }})
 
 				   	, o.createElement("div", { className: "wc-intro-name"},"HELLO")
 
 					// Yan Keat: this is added to put in the typing icon
                     , o.createElement("div", { id: "wc-loading-container-id", className:"wc-loading-container"}
-						, o.createElement("img", { src:'http://bot.digi.com.my/images/typingstatus.png'})
+						, o.createElement("img", { src:botTyping})
 						, o.createElement("div", { className: "wc-typing wc-loading-container-typing"})
 					)
                     ,t)
@@ -5931,7 +5931,7 @@
 
 					// uncomment  these code to put the Virtual Agent name on top instead of bellow
 					//o.createElement("div", {className: "wc-message-from wc-message-from-" + i}, e),
-						o.createElement("img", {className:"wc-message-from-bot-avatar",src: this.props.fromMe?'':'https://yellowchat.azurewebsites.net/images/digi-avatar.png',onLoad: function(){
+						o.createElement("img", {className:"wc-message-from-bot-avatar",src: this.props.fromMe?'':botAvatar,onLoad: function(){
 							var elements = document.getElementById('wc-loading-container-id');
 							if(elements){
 								elements.parentNode.removeChild(elements);
@@ -6280,7 +6280,7 @@
 							newTyping.className = 'wc-typing wc-loading-container-typing';
 
 							var newTypingImg = document.createElement("IMG");
-							newTypingImg.setAttribute("src", "http://bot.digi.com.my/images/typingstatus.png");
+							newTypingImg.setAttribute("src", botTyping);
 
 							newTypingContainer.appendChild(newTyping);
 							newTypingContainer.appendChild(newTypingImg);

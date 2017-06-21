@@ -56,18 +56,19 @@ var ApiGwAuthTokenExpiry = 0;
 var ApiGwSmsCounter = 0;
 
 var UrlList = [
-		"http://appurl.io/j1801ncp",								// 01
-		"http://new.digi.com.my/support/digi-store",				// 02
-		"https://store.digi.com.my/storefront/reload-details.ep",	// 03
-		"http://new.digi.com.my/prepaid-plans",						// 04
-		"http://new.digi.com.my/postpaid-plans",					// 05
-		"http://new.digi.com.my/prepaid-addons",					// 06
-		"http://new.digi.com.my/switch-to-digi",					// 07
-		"http://new.digi.com.my/business-overview",					// 08
-		"http://new.digi.com.my/bill-payment",						// 09
-		"http://new.digi.com.my/broadband",							// 10
-		"http://new.digi.com.my/broadband-devices",					// 11
-		"http://new.digi.com.my/roaming/roam-like-home-monthly"		// 12
+		"http://appurl.io/j1801ncp"										// 01
+		,"http://new.digi.com.my/support/digi-store"					// 02
+		,"https://store.digi.com.my/storefront/reload-details.ep"		// 03
+		,"http://new.digi.com.my/prepaid-plans"							// 04
+		,"http://new.digi.com.my/postpaid-plans"						// 05
+		,"http://new.digi.com.my/prepaid-addons"						// 06
+		,"http://new.digi.com.my/switch-to-digi"						// 07
+		,"http://new.digi.com.my/business-overview"						// 08
+		,"http://new.digi.com.my/bill-payment"							// 09
+		,"http://new.digi.com.my/broadband"								// 10
+		,"http://new.digi.com.my/broadband-devices"						// 11
+		,"http://new.digi.com.my/roaming/roam-like-home-monthly"		// 12
+		,"https://community.digi.com.my/t5/Apps-Services/Get-to-know-Connect-ID-All-you-need-to-know-and-more/ta-p/12838"
 	];
 	
 	
@@ -240,7 +241,7 @@ function ComplainChannels(session) {
                 new builder.HeroCard(session)
 				.title("Live Chat")
 				.buttons([
-					builder.CardAction.openUrl(session, 'new.digi.com.my/webchat', 'Start Live Chat')
+					builder.CardAction.openUrl(session, 'http://new.digi.com.my/webchat', 'Start Live Chat')
 				])
 					
             ]);
@@ -1582,7 +1583,7 @@ bot.dialog('FAQ-How-FnF', [
 
 bot.dialog('FAQ-Add-FnF', [
     function (session) {
-        session.send("Here's how you can manageyour Family and Friends: ");        
+        session.send("Here's how you can manage your Family and Friends: ");        
         var respCards = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.carousel)
             .attachments([
@@ -2064,25 +2065,19 @@ function ProcessApiAiResponse(session, response) {
 
 			// We have FB Card. Put all cards into carousel
 			var jsonFbCard = response.result.fulfillment.messages.filter(value=> {return value.type==1 && value.platform=='facebook'});
+			var CardAttachments = [];
 			if(jsonFbCard.length>0) {
-				var CardAttachments = [];
+console.log("come here3");
 				for(idx=0; idx<jsonFbCard.length; idx++){
 					var CardButtons = [];
 					if(jsonFbCard[idx].buttons) {
 						for (idxButton=0; idxButton<jsonFbCard[idx].buttons.length; idxButton++) {
 							// Check if quick reply is it HTTP or normal string
-							wwwLocation = jsonFbCard[idx].buttons[idxButton].postback.search("www");
+							wwwLocation = jsonFbCard[idx].buttons[idxButton].postback.search("http");
 							if(wwwLocation>=0){
-								httpLocation = jsonFbCard[idx].buttons[idxButton].postback.search("http");
-								if(httpLocation>=0) {
-									// URL includes http://
-									CardButtons.push(
-										builder.CardAction.openUrl(session, jsonFbCard[idx].buttons[idxButton].postback, jsonFbCard[idx].buttons[idxButton].text));
-								} else {
-									// URL DOES NOT includes http://
-									CardButtons.push(
-										builder.CardAction.openUrl(session, "http://"+jsonFbCard[idx].buttons[idxButton].postback, jsonFbCard[idx].buttons[idxButton].text));
-								}
+								// URL includes http://
+								CardButtons.push(
+									builder.CardAction.openUrl(session, jsonFbCard[idx].buttons[idxButton].postback, jsonFbCard[idx].buttons[idxButton].text));
 							} else {
 								// Button is normal imBack
 								CardButtons.push(
@@ -2098,16 +2093,14 @@ function ProcessApiAiResponse(session, response) {
 						.buttons(CardButtons)
 					);									
 				}
-				var respCards = new builder.Message(session)
-					.attachmentLayout(builder.AttachmentLayout.carousel)
-					.attachments(CardAttachments);
-				session.send(respCards);
 			}
 
 			// we have Facebook Quick Reply. Put as quickreply							
 			var jsonFbQuickReply = response.result.fulfillment.messages.filter(value=> {return value.type==2 && value.platform=='facebook'});
+			var QuickReplyButtons = [];
+			var QuickReplyText = "";
 			if(jsonFbQuickReply.length>0) {
-				var QuickReplyButtons = [];
+console.log("come here2");
 				for(idx=0; idx<jsonFbQuickReply.length; idx++){
 					for (idxQuickReply=0; idxQuickReply<jsonFbQuickReply[idx].replies.length; idxQuickReply++) {
 
@@ -2115,6 +2108,7 @@ function ProcessApiAiResponse(session, response) {
 						var urlLocation = jsonFbQuickReply[idx].replies[idxQuickReply].search('-L');
 						var urlTitle = jsonFbQuickReply[idx].replies[idxQuickReply].substring(0,urlLocation);
 						var urlString = "";
+						var wwwLocation = jsonFbQuickReply[idx].replies[idxQuickReply].search("http");
 						
 						// Add in our predetermined URL
 						if(urlLocation>=0) {
@@ -2125,38 +2119,43 @@ function ProcessApiAiResponse(session, response) {
 								QuickReplyButtons.push(
 									builder.CardAction.openUrl(session, urlString, urlTitle));
 							}
+						} else if (wwwLocation>=0){
+							// URL includes http://
+							CardButtons.push(
+								builder.CardAction.openUrl(session, jsonFbCard[idx].buttons[idxButton].postback, jsonFbCard[idx].buttons[idxButton].text));							
+							
 						} else {
 							QuickReplyButtons.push(
 								builder.CardAction.imBack(session, jsonFbQuickReply[idx].replies[idxQuickReply], jsonFbQuickReply[idx].replies[idxQuickReply]));
 						}
 					}
 				}
-				var respCards;
-				respCards = new builder.Message(session)
-					.text(jsonFbQuickReply[0].title)
-					.suggestedActions(
-						builder.SuggestedActions.create(
-							session,QuickReplyButtons
-						)
-					);
-				session.send(respCards);
+				QuickReplyText = jsonFbQuickReply[0].title;
 			}
 			
 			// We have FB Images
 			var jsonFbImage = response.result.fulfillment.messages.filter(value=> {return value.type==3 && value.platform=='facebook'});
 			if(jsonFbImage.length>0) {
-				var CardAttachments = [];
+console.log("come here1");
 				for(idx=0; idx<jsonFbImage.length; idx++){
 					CardAttachments.push(
 						new builder.HeroCard(session)
 						.images([ builder.CardImage.create(session, jsonFbImage[idx].imageUrl) ])
 					);									
 				}
-				var respCards = new builder.Message(session)
-					.attachmentLayout(builder.AttachmentLayout.carousel)
-					.attachments(CardAttachments);
-				session.send(respCards);
 			}
+console.log("come here");
+			if(CardAttachments.length>0 || QuickReplyButtons.length>0)
+			var respCards = new builder.Message(session)
+				.attachmentLayout(builder.AttachmentLayout.carousel)
+				.attachments(CardAttachments)
+				.suggestedActions(
+					builder.SuggestedActions.create(
+						session,QuickReplyButtons
+					)
+				);
+			session.send(respCards);
+			
 		} else {
 			// No Facebook Message. we only have normal message. output only normal string
 			// Print out each individual Messages
@@ -2296,12 +2295,12 @@ bot.dialog('CatchAll', [
 							case 'Plan-Fastest':
 							case 'Plan-HighTier-Over100':
 							case 'Plan-MinimumReload':
-							case 'Plan-MonthlyBilling':
-							case 'Plan-PayAsYouGo':
+							//case 'Plan-MonthlyBilling':
+							//case 'Plan-PayAsYouGo':
 							case 'Plan-Prepaid-Expire':
 							//case 'Plan-Recommendation':
-							case 'Plan-RecommendPlanBySocialMedia':
-							case 'Plan-RecommendPlanByStreaming':
+							//case 'Plan-RecommendPlanBySocialMedia':
+							//case 'Plan-RecommendPlanByStreaming':
 							case 'Plan-SpecialNumber':
 							case 'Roaming-ActivateForOthers':
 							case 'Roaming-ActivateWhileAbroad':
