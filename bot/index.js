@@ -228,16 +228,24 @@ bot.dialog('YouThere', [(session)=>{
 
 function ComplainChannels(session) {
 	var now = new Date();
+	currentTime = now.getHours()+8; // offset with GMT
 
-	if(now.getHours()>=10 && now.getHours()<=21) {//Between 10am-9pm, show livechat button
+	if(currentTime>=10 && currentTime<=21) {//Between 10am-9pm, show livechat button
 		session.send("* Talk to us on Twitter : \n\n https://twitter.com/mydigi \n\n"
-					 + "* Call us at the Digi Helpline: \n\n 016-2211-800"
+					 + "* Call us at the Digi Helpline: \n\n 016-2211-800 \n\n"
 					 + "* Chat with us at Digi Live Chat.");
-		var respCards = new builder.HeroCard(session)
-		.buttons([
-			builder.CardAction.openUrl(session, 'new.digi.com.my/webchat', 'Live Chat')
-		]);
-		session.send(respCards);
+        var respCards = new builder.Message(session)
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments([
+                new builder.HeroCard(session)
+				.title("Live Chat")
+				.buttons([
+					builder.CardAction.openUrl(session, 'new.digi.com.my/webchat', 'Start Live Chat')
+				])
+					
+            ]);
+		session.send(respCards);		
+		
 	} else {
 		session.send("* Talk to us on Twitter : \n\n https://twitter.com/mydigi \n\n"
 					 + "* Call us at the Digi Helpline: \n\n 016-2211-800");
