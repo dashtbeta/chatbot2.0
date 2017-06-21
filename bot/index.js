@@ -55,6 +55,24 @@ var ApiGwAuthToken = '';
 var ApiGwAuthTokenExpiry = 0;
 var ApiGwSmsCounter = 0;
 
+var UrlList = [
+		"http://appurl.io/j1801ncp",								// 01
+		"http://new.digi.com.my/support/digi-store",				// 02
+		"https://store.digi.com.my/storefront/reload-details.ep",	// 03
+		"http://new.digi.com.my/prepaid-plans",						// 04
+		"http://new.digi.com.my/postpaid-plans",					// 05
+		"http://new.digi.com.my/prepaid-addons",					// 06
+		"http://new.digi.com.my/switch-to-digi",					// 07
+		"http://new.digi.com.my/business-overview",					// 08
+		"http://new.digi.com.my/bill-payment",						// 09
+		"http://new.digi.com.my/broadband",							// 10
+		"http://new.digi.com.my/broadband-devices",					// 11
+		"http://new.digi.com.my/roaming/roam-like-home-monthly"		// 12
+	];
+	
+	
+	
+	
 ////////////////////////////////////////////////////////////////////////////
 // Initialization functions
 // Get secrets from server environment
@@ -1481,7 +1499,7 @@ bot.dialog('Start-Over', [
 		session.send("Alright. Let's start over");
     }
 ]).triggerAction({
-    matches: /.*(Start Over).*/i
+    matches: /(Start Over)|(Cancel)/i
 });
 
 // FAQ
@@ -2083,21 +2101,21 @@ function ProcessApiAiResponse(session, response) {
 			if(jsonFbQuickReply.length>0) {
 				var QuickReplyButtons = [];
 				for(idx=0; idx<jsonFbQuickReply.length; idx++){
-					var QuickReplyTitleUsedAsUrl = 0;
 					for (idxQuickReply=0; idxQuickReply<jsonFbQuickReply[idx].replies.length; idxQuickReply++) {
-						// Check if quick reply is it HTTP or normal string
-						wwwLocation = jsonFbQuickReply[idx].replies[idxQuickReply].search("www");
-						if(wwwLocation>=0){
-							QuickReplyTitleUsedAsUrl = 1;
-							httpLocation = jsonFbQuickReply[idx].replies[idxQuickReply].search("http");
-							if(httpLocation>=0) {
-								// URL includes http://
+
+						// Check if we have escape keys
+						var urlLocation = jsonFbQuickReply[idx].replies[idxQuickReply].search('-L');
+						var urlTitle = jsonFbQuickReply[idx].replies[idxQuickReply].substring(0,urlLocation);
+						var urlString = "";
+						
+						// Add in our predetermined URL
+						if(urlLocation>=0) {
+							var urlReplies = jsonFbQuickReply[idx].replies[idxQuickReply];
+							var selectedUrl = parseInt(urlReplies.substring(urlLocation+2,urlReplies.length)) - 1;
+							if (UrlList.length > selectedUrl) {
+								urlString = UrlList[selectedUrl];
 								QuickReplyButtons.push(
-									builder.CardAction.openUrl(session, jsonFbQuickReply[idx].replies[idxQuickReply], jsonFbQuickReply[idx].title));
-							} else {
-								// URL DOES NOT includes http://
-								QuickReplyButtons.push(
-									builder.CardAction.openUrl(session, "http://"+jsonFbQuickReply[idx].replies[idxQuickReply], jsonFbQuickReply[idx].title));
+									builder.CardAction.openUrl(session, urlString, urlTitle));
 							}
 						} else {
 							QuickReplyButtons.push(
@@ -2106,23 +2124,13 @@ function ProcessApiAiResponse(session, response) {
 					}
 				}
 				var respCards;
-				if(QuickReplyTitleUsedAsUrl) {
-					respCards = new builder.Message(session)
-						.text(jsonFbQuickReply[0].title)
-						.suggestedActions(
-							builder.SuggestedActions.create(
-								session,QuickReplyButtons
-							)
-						);
-				} else {
-					respCards = new builder.Message(session)
-						.text(jsonFbQuickReply[idx].title)
-						.suggestedActions(
-							builder.SuggestedActions.create(
-								session,QuickReplyButtons
-							)
-						);
-				}
+				respCards = new builder.Message(session)
+					.text(jsonFbQuickReply[0].title)
+					.suggestedActions(
+						builder.SuggestedActions.create(
+							session,QuickReplyButtons
+						)
+					);
 				session.send(respCards);
 			}
 			
@@ -2165,9 +2173,7 @@ function ProcessApiAiAndAddButton(session, response) {
 		if(jsonObjectMsg) {
 			for(idx=0; idx<(jsonObjectMsg.length-1); idx++) {
 				if(jsonObjectMsg[idx].speech.length >0) {
-					var tempString = jsonObjectMsg[idx].speech;
-					tempString.replace(/[\r\n]+/g, "\n\n");
-					session.send(tempString);
+					session.send(jsonObjectMsg[idx].speech);
 				}
 			}
 			// Last Message, add in button, either Download MyDigi / Go to Store
@@ -2274,7 +2280,7 @@ bot.dialog('CatchAll', [
 							case 'FAQ-Mydigi':
 							case 'FAQ-MyDigi-Download-Bill':
 							case 'FAQ-MyDigi-Pay-For-Other':
-							case 'FAQ-PUK-Code':
+							//case 'FAQ-PUK-Code':
 							case 'FAQ-Talk-Time-Transfer':
 							case 'Find-A-Store':
 							//case 'IDD-CallFail':
